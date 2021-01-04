@@ -1,5 +1,7 @@
 Direct Electron image acquisition software for 4D STEM
 
+latest version tested on Titan
+
 Developed in Visual Studio 2015
 
 Three folders under C++_CSharp_Client:
