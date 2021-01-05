@@ -235,3 +235,27 @@ C:\Users\End-user\Desktop\DE\DEsoftware_driftcorrection\C++_CSharp_Client\Softwa
 C:\Users\End-user\Desktop\DE\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CopyComplete
 C:\Users\End-user\Desktop\DE\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.exe
 C:\Users\End-user\Desktop\DE\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe.config
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.dll
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\HDF5DotNet.dll
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\bin\x64\Debug\System.Collections.dll
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csprojAssemblyReference.cache
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\ImageView.baml
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.baml
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.baml
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\Simple Styles.baml
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\App.baml
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\ImageView.g.cs
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.g.cs
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.g.cs
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\App.g.cs
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_Content.g.cs
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_MarkupCompile.cache
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.g.resources
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.Properties.Resources.resources
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.GenerateResource.cache
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CopyComplete
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\Jingrui Wei\Desktop\DEsoftware_driftcorrection\C++_CSharp_Client\Software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.pdb

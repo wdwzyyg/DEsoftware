@@ -128,6 +128,12 @@ namespace DeExampleCSharpWPF
             HW_SUCCESS,
             HW_OTHER
         }
+        // Status return if the function is finished running _need to be tested 
+        public enum FUNC_STATUS_RETURNS
+        {
+            FUNC_FINISHED,
+            FUNC_UNFINISHED
+        }
         #endregion
 
         #region initialize and close main window
@@ -549,490 +555,6 @@ namespace DeExampleCSharpWPF
         //        SamplePerFrame: Acquisition frequency on digitizer
         //        DEFrameRate: old name was used here, this is actually the dwell time for each beam position, NOT RATE
 
-        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
-        {
-            // Generate new array for rescaled HAADF image
-            UInt16[] HAADF_rescale = new UInt16[size_x * size_y  * framecycle];
-
-            UInt16[] HAADF_pre = new UInt16[size_x * size_y * pixelcycle * framecycle];
-
-            // Generate csv file to save HAADF raw array
-            var csv = new StringBuilder();  //should be xpos * ypos * frame_cycle values 
-            var csv_raw = new StringBuilder();
-
-            double Array_max = RawArray.Max();
-            double Array_min = RawArray.Min();
-            double scale = 65535 / (Array_max - Array_min) / 2;
-            double average;
-
-            List<double> subArray_list = new List<double>();
-            int total_px = size_x * size_y;
-            int cycle = -1;  // 0 - e.g.99 is used
-            int pos = 0;
-            double DE_time = DEFrameRate;  
-            double Digi_time = 1 / (double)SamplesPerFrame;
-            //int step = (pixelcycle - 1) * recordsize / size_x / size_y;
-            // currently we assume the dead time won't take more than two samples from digitizer
-
-            while (pos < RawArray.Count())
-            {
-                csv_raw.AppendLine(RawArray[pos].ToString());
-                // 1e-10 is used to avoid round off error for two times
-                if (DE_time < Digi_time - 1e-10)
-                // when get all samples at one pixel, set the averaged value to new array
-                {
-                    DE_time += DEFrameRate;
-                    cycle++;
-                    average = subArray_list.Average();
-                    csv.AppendLine(average.ToString());
-                    HAADF_pre[cycle] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
-                    subArray_list.Clear();
-                    pos += 1; // skip one px and skip other value at the same position
-                    Digi_time += 1 / (double)SamplesPerFrame;
-
-                    if (cycle == total_px * pixelcycle * framecycle - 1)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    subArray_list.Add(RawArray[pos]);
-                    pos++;
-                    Digi_time += 1 / (double)SamplesPerFrame;
-                }
-
-            }
-
-            //save first value at each position
-            pos = 0;
-            cycle = -1;
-            while (pos < HAADF_pre.Count())
-            {
-                cycle++;
-                HAADF_rescale[cycle] = HAADF_pre[pos];
-                pos += pixelcycle;
-              
-            }
-
-            int fc = 0;
-            while(fc < framecycle)
-            {
-                // write to different bitmap for different options
-                int bytesPerPixel = 2;
-                int stride = size_x * bytesPerPixel;
-                // No flipLR now.
-                BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale.Skip(total_px * fc).Take(total_px).ToArray(), stride);
-                fc++;
-                // invoke different image box source for different options
-                if (option == 0)
-                {
-                    HAADF.Source = HAADFbmpSource;
-                }
-
-                if (option == 1)
-                {
-                    HAADFacquisition.Source = HAADFbmpSource;
-                }
-
-            }
-            
-            // save HAADF raw data to csv file
-
-            string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
-            string FullPath_raw = HAADFPath.Text + "HAADF_rawPreview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
-
-
-            System.IO.FileInfo fi = null;
-            try
-            {
-                fi = new System.IO.FileInfo(FullPath);
-            }
-            catch (ArgumentException) { }
-            catch (System.IO.PathTooLongException) { }
-            catch (NotSupportedException) { }
-            if (ReferenceEquals(fi, null))
-            {
-                System.Windows.Forms.MessageBox.Show("HAADF saving path is not valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            else
-            {
-                File.WriteAllText(FullPath, csv.ToString());
-                File.WriteAllText(FullPath_raw, csv_raw.ToString());
-            }
-
-        }
-
-
-        private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (_isResizing)    // top left resizing grip
-            {
-                System.Windows.Point currentPosition = Mouse.GetPosition(this);
-                double diffX = currentPosition.X - _startPosition.X;
-                double diffY = currentPosition.Y - _startPosition.Y;
-                double currentLeft = gridResize.Margin.Left;
-                double currentTop = gridResize.Margin.Top;
-                double currentRight = gridResize.Margin.Right;
-                double currentBottom = gridResize.Margin.Bottom;
-                if(currentLeft<0)
-                {
-                    currentLeft = 0;
-                }
-                if(currentLeft > 512 - currentRight - 30)
-                {
-                    currentLeft = 512 - currentRight - 30;
-                }
-                if (currentTop < 0)
-                {
-                    currentTop = 0;
-                }
-                if (currentTop > 512 - currentBottom - 30)
-                {
-                    currentTop = 512 - currentBottom - 30;
-                }
-
-                gridResize.Margin = new Thickness(currentLeft + diffX, currentTop + diffY, currentRight, currentBottom);
-                _startPosition = currentPosition;
-                StartX.Text = currentLeft.ToString();
-                StartY.Text = currentTop.ToString();
-                EndX.Text = (512-currentRight).ToString();
-                EndY.Text = (512-currentBottom).ToString();  // 28 for height of topic
-            }
-            if (_isResizing2)
-            {
-                System.Windows.Point currentPosition = Mouse.GetPosition(this);
-                double diffX = currentPosition.X - _startPosition.X;
-                double diffY = currentPosition.Y - _startPosition.Y;
-                double currentLeft = gridResize.Margin.Left;
-                double currentTop = gridResize.Margin.Top;
-                double currentRight = gridResize.Margin.Right;
-                double currentBottom = gridResize.Margin.Bottom;
-                if (currentRight < 0)
-                {
-                    currentRight = 0;
-                }
-                if (currentLeft > 512 - currentRight - 30)
-                {
-                    currentRight = 512 - currentLeft - 30;
-                }
-                if (currentBottom < 0)
-                {
-                    currentBottom = 0;
-                }
-                if (currentTop > 512 - currentBottom - 30)
-                {
-                    currentBottom = 512 - currentTop - 30;
-                }
-                gridResize.Margin = new Thickness(currentLeft, currentTop, currentRight - diffX, currentBottom - diffY);
-                _startPosition = currentPosition;
-                StartX.Text = currentLeft.ToString();
-                StartY.Text = currentTop.ToString();
-                EndX.Text = (512-currentRight).ToString();
-                EndY.Text = (512-currentBottom).ToString();
-            }
-        }
-
-        private void resizeGrip_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (_isResizing == true)
-            {
-                _isResizing = false;
-                Mouse.Capture(null);
-            }
-
-        }
-
-        private void resizeGrip_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (Mouse.Capture(resizeGrip2))
-            {
-                _isResizing = true;
-                _startPosition = Mouse.GetPosition(this);
-            }
-        }
-
-        private void resizeGrip3_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (_isResizing2 == true)
-            {
-                _isResizing2 = false;
-                Mouse.Capture(null);
-            }
-        }
-
-        private void resizeGrip3_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (Mouse.Capture(resizeGrip3))
-            {
-                _isResizing2 = true;
-                _startPosition = Mouse.GetPosition(this);
-            }
-        }
-
-        #endregion
-
-        #region load seq/mrc and save as emd(h5) file
-
-        private void SEQFilePath_Click(object sender, RoutedEventArgs e)
-        {
-            string folder = SEQPath.Text;
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-            openFileDialog1.Filter = "Cursor Files|*.seq";
-            openFileDialog1.Title = "Select a Cursor File";
-            //System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
-            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                folder = openFileDialog1.FileName;
-            }
-            folder = folder.Replace("\\", "/");
-            SEQPath.Text = folder;
-        }
-
-
-        private void HAADFFilePath_Click(object sender, RoutedEventArgs e)
-        {
-            string folder = HAADFPath.Text;
-            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                folder = dlg.SelectedPath;
-            }
-            folder = folder.Replace("\\", "/");
-            HAADFPath.Text = folder;
-        }
-
-        private void EMDFilePath_Click(object sender, RoutedEventArgs e)
-        {
-            string folder = EMDPath.Text;
-            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                folder = dlg.SelectedPath;
-            }
-            folder = folder.Replace("\\", "/");
-            EMDPath.Text = folder;
-            string filename = EMDName.Text;
-            string fullpath = folder + "/" + filename + ".emd";
-        }
-
-        private void DiscardEMD_Click(object sender, RoutedEventArgs e)
-        {
-            string folder = EMDPath.Text;
-            string filename = EMDName.Text;
-            string fullpath = folder + "/" + filename + ".emd";
-            File.Delete(fullpath);
-        }
-
-        // load mrc file that just acquired and do reconstrcution for BF/ABF
-        public void LoadnRecon_Click(object sender, RoutedEventArgs e)
-        {
-            // if EnableDetector option is not checked, change it to ture and use default BF range
-            if (EnableDetector.IsChecked == false)
-            {
-                EnableDetector.IsChecked = true;
-                DisableDetector.IsChecked = false;
-                slider_innerang.Value = 0;
-                slider_outerang.Value = 1;
-            }
-            // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
-            
-            UInt32 sizex = 0;
-            UInt32 sizey = 0;
-            UInt16 numframe = 0;
-
-            //ReadMRCfile();
-            SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
-            string sent;
-            sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
-            MessageBox.Text += sent;
-            sent = " Each frame has " + sizex + " by " + sizey + " pixels.\n";
-            MessageBox.Text += sent;
-            UInt16[] FirstFrame = new UInt16[sizex * sizey];
-            SEQ.LoadFirstFrame(SEQPath.Text, ref FirstFrame);
-
-
-            // downsampling and rescale first frame before display in 400x400 px image box
-            int ratio = (int)Math.Ceiling((double)sizex / 400);
-            int sizex_resize = (int)Math.Floor((double)sizex / (double)ratio);
-            int sizey_resize = (int)Math.Floor((double)sizey / (double)ratio);
-            UInt16[] FirstFrame_resize = new UInt16[sizex_resize * sizey_resize];
-            double[] subArray = new double[ratio];
-            List<double> subArray_list = new List<double>();
-
-            for (int j = 0; j < sizey_resize ; j++)
-            {
-                for (int i = 0; i < sizex_resize; i++)
-                {
-                    Array.Copy(FirstFrame, j * sizex + i * ratio, subArray, 0, ratio);
-                    subArray_list.Clear();
-                    subArray_list = subArray.ToList();
-                    if ((UInt16)subArray_list.Average() < 1500)
-                    {
-                        FirstFrame_resize[j * sizex_resize + i] = (UInt16)subArray_list.Average();
-                    }
-                }
-            }
-
-            UInt16 maxint = FirstFrame_resize.Max();
-            UInt16 minint = FirstFrame_resize.Min();
-            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)( (double)r / (maxint - minint) * 65535)).ToArray();
-
-
-            int bytesPerPixel = 2;
-            int stride = sizex_resize * bytesPerPixel;
-            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96,96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
-            pictureBox1.Source = FirstFramebmpSource;
-        }
-
-        private void ReconFromSEQ_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        // save the loaded mrc file to EMD format
-        private void ResaveEMD_Click(object sender, RoutedEventArgs e)
-        {
-            //HDF5.InitializeHDF(numpos, height, width);
-        }
-
-
-        // function to load 4DSTEM dataset from mrc file, resave as h5, and reconstruct to 2D image with virtual aperture
-        public void ReadMRCfile()
-        {
-            // start reading mrc file
-            string path_string = "";
-            string name_string = "";
-            _deInterface.GetProperty("Autosave Directory", ref path_string);
-            _deInterface.GetProperty("Autosave Frames - Previous Dataset Name", ref name_string);
-            path_string = path_string.Replace("\\","/");
-            string path = path_string + "/" + name_string + "_RawImages.mrc";
-
-            using (var filestream = File.Open(@path, FileMode.Open))
-            using (var binaryStream = new BinaryReader(filestream))
-            {
-                // read headers
-                width = binaryStream.ReadInt32();
-                height = binaryStream.ReadInt32();
-                numpos = binaryStream.ReadInt32();
-                int format = binaryStream.ReadInt32();
-                for (var i = 0; i < 6; i++)    // the rest 6 integer numbers, int32, useless here
-                {
-                    binaryStream.ReadInt32();
-                    //Console.WriteLine(binaryStream.ReadInt32());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
-                {
-                    binaryStream.ReadSingle();
-                    //Console.WriteLine(binaryStream.ReadSingle());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
-                {
-                    binaryStream.ReadInt32();
-                    //Console.WriteLine(binaryStream.ReadInt32());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 8; i++)    // 8 chars
-                {
-                    binaryStream.ReadChar();
-                    //Console.WriteLine(binaryStream.ReadChar());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 2; i++)    // 2 integer numbers, int32
-                {
-                    binaryStream.ReadInt32();
-                    //Console.WriteLine(binaryStream.ReadInt32());
-                }
-                for (var i = 0; i < 10; i++)    // 10 strings
-                {
-                    binaryStream.ReadChars(80);
-                    //Console.WriteLine(binaryStream.ReadChars(80));
-                }
-
-                // finish reading headers
-                UInt16[,,] datacube = new UInt16[width, height, numpos];
-
-                // 3D array created for reconstruction and HDF5 file
-                for (var ilayer = 0; ilayer < numpos; ilayer++)
-                {
-                    for (var iy = 0; iy < height; iy++)
-                    {
-                        for (var ix = 0; ix < width; ix++)
-                        {
-                            datacube[ix, iy, ilayer] = binaryStream.ReadUInt16(); // [ix, iy, ilayer], correspond to [col, row, layer]
-                        }
-                    }
-                }
-
-                // start reconstruction and show reconstruction result if option enabled
-                string StrX = null;
-                string StrY = null;
-                int px = 0, py = 0;
-
-                // create H5 file with attributes and data
-                string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd" ;
-                //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
-
-
-                PosX.Dispatcher.Invoke(
-                    (ThreadStart)delegate { StrX = PosX.Text; }
-                    );
-                PosY.Dispatcher.Invoke(
-                    (ThreadStart)delegate { StrY = PosX.Text; }
-                    );
-
-                if (Int32.TryParse(StrX, out px))
-                {
-                    if (Int32.TryParse(StrY, out py))
-                    {
-                        if (numpos == px * py)
-                        {
-                            Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
-                            UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
-                            UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
-                            ushort sum = 0;
-                            int min = 65535;
-                            int max = 0;
-                            recon_scale[0] = 255;
-                            BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
-                            InitializeWBmpRecon(ReconBitmapSource);
-                            for (var iy = 0; iy < py; iy++)
-                            {
-                                for (var ix = 0; ix < px; ix++)
-                                {
-                                    UInt16[] imagelayer = ExtractArray(datacube, iy * px + ix, width, height);
-                                    double innerang = 0;
-                                    double outerang = 0;
-                                    slider_innerang.Dispatcher.Invoke(
-                                        (ThreadStart)delegate { innerang = slider_innerang.Value; }
-                                        );
-                                    slider_outerang.Dispatcher.Invoke(
-                                        (ThreadStart)delegate { outerang = slider_outerang.Value; }
-                                        );
-                                    sum = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
-                                    recon[iy*px + ix] = sum;
-                                    if (recon[iy * px + ix] < min) min = recon[iy * px + ix];
-                                    if (recon[iy * px + ix] > max) max = recon[iy * px + ix]; //update max and min after recon array changed
-                                    for (int i = 0; i < iy * px + ix; i++)
-                                    {
-                                        recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min if scale changed
-                                    }
-                                }
-                            }
-                            this.Dispatcher.BeginInvoke(new Action(() =>
-                            {
-                                _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
-
-                            }));
-                            
-                        }
-                    }
-                }
-            }
-        }
 
         #endregion
 
@@ -1286,6 +808,747 @@ namespace DeExampleCSharpWPF
             else
                 refined_rate = (int)2e7;    // 20MSa/sec is the maximum sampling rate for this digitizer
             return refined_rate;
+        }
+
+        #endregion
+
+
+        #region Supporting functions
+
+        private void ConventionScan(int x_step_num, int y_step_num, double x_step_size, double y_step_size, int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        {
+
+            for (int ix = 0; ix < x_step_num; ix++)
+            {
+                Xarray_index[ix] = ix;
+                Xarray_vol[ix] = -0.5 + x_step_size * ix;
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy] = iy;
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
+            }
+        }
+
+        private void SerpentineScan(int x_step_num, int y_step_num, double x_step_size, double y_step_size, int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        {
+
+            for (int ix = 0; ix < x_step_num * 2; ix++)
+            {
+                if (ix < x_step_num)
+                {
+                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                    Xarray_index[ix] = ix;
+                }
+                else
+                {
+                    Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                }
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy + 1] = iy;
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
+            }
+            Yarray_index[0] = y_step_num;
+            Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+            Yarray_index[y_step_num + 2] = y_step_num;
+            Yarray_vol[y_step_num] = 1;
+
+        }
+
+        public FUNC_STATUS_RETURNS HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
+        {
+            // Generate new array for rescaled HAADF image
+            UInt16[] HAADF_rescale = new UInt16[size_x * size_y * framecycle];
+
+            UInt16[] HAADF_pre = new UInt16[size_x * size_y * pixelcycle * framecycle];
+
+            // Generate csv file to save HAADF raw array
+            var csv = new StringBuilder();  //should be xpos * ypos * frame_cycle values 
+            var csv_raw = new StringBuilder();
+
+            double Array_max = RawArray.Max();
+            double Array_min = RawArray.Min();
+            double scale = 65535 / (Array_max - Array_min) / 2;
+            double average;
+
+            List<double> subArray_list = new List<double>();
+            int total_px = size_x * size_y;
+            int cycle = -1;  // 0 - e.g.99 is used
+            int pos = 0;
+            double DE_time = DEFrameRate;
+            double Digi_time = 1 / (double)SamplesPerFrame;
+            //int step = (pixelcycle - 1) * recordsize / size_x / size_y;
+            // currently we assume the dead time won't take more than two samples from digitizer
+
+            while (pos < RawArray.Count())
+            {
+                csv_raw.AppendLine(RawArray[pos].ToString());
+                // 1e-10 is used to avoid round off error for two times
+                if (DE_time < Digi_time - 1e-10)
+                // when get all samples at one pixel, set the averaged value to new array
+                {
+                    DE_time += DEFrameRate;
+                    cycle++;
+                    average = subArray_list.Average();
+                    csv.AppendLine(average.ToString());
+                    HAADF_pre[cycle] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    subArray_list.Clear();
+                    pos += 1; // skip one px and skip other value at the same position
+                    Digi_time += 1 / (double)SamplesPerFrame;
+
+                    if (cycle == total_px * pixelcycle * framecycle - 1)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    subArray_list.Add(RawArray[pos]);
+                    pos++;
+                    Digi_time += 1 / (double)SamplesPerFrame;
+                }
+
+            }
+
+            //save first value at each position
+            pos = 0;
+            cycle = -1;
+            while (pos < HAADF_pre.Count())
+            {
+                cycle++;
+                HAADF_rescale[cycle] = HAADF_pre[pos];
+                pos += pixelcycle;
+
+            }
+
+            int fc = 0;
+            while (fc < framecycle)
+            {
+                // write to different bitmap for different options
+                int bytesPerPixel = 2;
+                int stride = size_x * bytesPerPixel;
+                // No flipLR now.
+                BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale.Skip(total_px * fc).Take(total_px).ToArray(), stride);
+                fc++;
+                // invoke different image box source for different options
+                if (option == 0)
+                {
+                    HAADF.Source = HAADFbmpSource;
+                }
+
+                if (option == 1)
+                {
+                    HAADFacquisition.Source = HAADFbmpSource;
+                }
+
+            }
+
+            // save HAADF raw data to csv file
+
+            string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
+            string FullPath_raw = HAADFPath.Text + "HAADF_rawPreview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
+
+
+            System.IO.FileInfo fi = null;
+            try
+            {
+                fi = new System.IO.FileInfo(FullPath);
+            }
+            catch (ArgumentException) { }
+            catch (System.IO.PathTooLongException) { }
+            catch (NotSupportedException) { }
+            if (ReferenceEquals(fi, null))
+            {
+                System.Windows.Forms.MessageBox.Show("HAADF saving path is not valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //FUNC_STATUS_RETURNS HAADFSHOW = FUNC_STATUS_RETURNS.FUNC_UNFINISHED;
+            }
+            else
+            {
+                File.WriteAllText(FullPath, csv.ToString());
+                File.WriteAllText(FullPath_raw, csv_raw.ToString());
+                //FUNC_STATUS_RETURNS HAADFSHOW = FUNC_STATUS_RETURNS.FUNC_FINISHED;
+            }
+            return FUNC_STATUS_RETURNS.FUNC_FINISHED;
+        }
+
+        private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (_isResizing)    // top left resizing grip
+            {
+                System.Windows.Point currentPosition = Mouse.GetPosition(this);
+                double diffX = currentPosition.X - _startPosition.X;
+                double diffY = currentPosition.Y - _startPosition.Y;
+                double currentLeft = gridResize.Margin.Left;
+                double currentTop = gridResize.Margin.Top;
+                double currentRight = gridResize.Margin.Right;
+                double currentBottom = gridResize.Margin.Bottom;
+                if (currentLeft < 0)
+                {
+                    currentLeft = 0;
+                }
+                if (currentLeft > 512 - currentRight - 30)
+                {
+                    currentLeft = 512 - currentRight - 30;
+                }
+                if (currentTop < 0)
+                {
+                    currentTop = 0;
+                }
+                if (currentTop > 512 - currentBottom - 30)
+                {
+                    currentTop = 512 - currentBottom - 30;
+                }
+
+                gridResize.Margin = new Thickness(currentLeft + diffX, currentTop + diffY, currentRight, currentBottom);
+                _startPosition = currentPosition;
+                StartX.Text = currentLeft.ToString();
+                StartY.Text = currentTop.ToString();
+                EndX.Text = (512 - currentRight).ToString();
+                EndY.Text = (512 - currentBottom).ToString();  // 28 for height of topic
+            }
+            if (_isResizing2)
+            {
+                System.Windows.Point currentPosition = Mouse.GetPosition(this);
+                double diffX = currentPosition.X - _startPosition.X;
+                double diffY = currentPosition.Y - _startPosition.Y;
+                double currentLeft = gridResize.Margin.Left;
+                double currentTop = gridResize.Margin.Top;
+                double currentRight = gridResize.Margin.Right;
+                double currentBottom = gridResize.Margin.Bottom;
+                if (currentRight < 0)
+                {
+                    currentRight = 0;
+                }
+                if (currentLeft > 512 - currentRight - 30)
+                {
+                    currentRight = 512 - currentLeft - 30;
+                }
+                if (currentBottom < 0)
+                {
+                    currentBottom = 0;
+                }
+                if (currentTop > 512 - currentBottom - 30)
+                {
+                    currentBottom = 512 - currentTop - 30;
+                }
+                gridResize.Margin = new Thickness(currentLeft, currentTop, currentRight - diffX, currentBottom - diffY);
+                _startPosition = currentPosition;
+                StartX.Text = currentLeft.ToString();
+                StartY.Text = currentTop.ToString();
+                EndX.Text = (512 - currentRight).ToString();
+                EndY.Text = (512 - currentBottom).ToString();
+            }
+        }
+
+        private void resizeGrip_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isResizing == true)
+            {
+                _isResizing = false;
+                Mouse.Capture(null);
+            }
+
+        }
+
+        private void resizeGrip_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.Capture(resizeGrip2))
+            {
+                _isResizing = true;
+                _startPosition = Mouse.GetPosition(this);
+            }
+        }
+
+        private void resizeGrip3_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isResizing2 == true)
+            {
+                _isResizing2 = false;
+                Mouse.Capture(null);
+            }
+        }
+
+        private void resizeGrip3_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.Capture(resizeGrip3))
+            {
+                _isResizing2 = true;
+                _startPosition = Mouse.GetPosition(this);
+            }
+        }
+
+        // Function used to generate two scan array for AWG channels for ROI scan area, only called by ROI_4DSTEM, not used in 2D and fullsize 4D acquisition
+        // Input: two empty double arrays
+        // Save two arrays into Xarray and Yarray
+        public void GenerateROIScanArray(ref int[] Xarray_index, ref int[] Yarray_index, ref double[] Xarray_vol, ref double[] Yarray_vol)
+        {
+            // fractional scan range between [-0.5, 0.5]
+            double x_scan_low = (double.Parse(StartX.Text) - 256) / 256 / 2;
+            double x_scan_high = (double.Parse(EndX.Text) - 256) / 256 / 2;
+            double y_scan_low = (double.Parse(StartY.Text) - 256) / 256 / 2;
+            double y_scan_high = (double.Parse(EndY.Text) - 256) / 256 / 2;
+
+            // Force x,y scan to have same step size, i.e. square pixel, calculate y_step num based on step size and ROI shape
+            int x_step_num = int.Parse(PosX.Text);
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = x_step_size;
+            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            // passive scan setting
+
+            if (scan_scheme == 1)
+            {
+
+                for (int ix = 0; ix < x_step_num * 2; ix++)
+                {
+                    if (ix < x_step_num)
+                    {
+                        Xarray_vol[ix] = x_scan_low + x_step_size * ix;
+                        Xarray_index[ix] = ix;
+                    }
+                    else
+                    {
+                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                    }
+                }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy + 1] = iy;
+                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
+                }
+                Yarray_index[0] = y_step_num;
+                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+                Yarray_index[y_step_num + 2] = y_step_num;
+                Yarray_vol[y_step_num] = 1;
+            }
+            else // traditional scan setting
+            {
+
+                for (int ix = 0; ix < x_step_num; ix++)
+                {
+                    Xarray_index[ix] = ix;
+                    Xarray_vol[ix] = x_scan_low + x_step_size * ix;
+                }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy] = iy;
+                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
+                }
+            }
+
+        }
+
+        public void ROI4DSTEMperFrame(double x_scan_low, double x_scan_high, double y_scan_low, double y_scan_high, int x_step_num, int fps, int pixel_cycle)
+        {
+            // Variables related to scan arrays
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = x_step_size;
+            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            // Acquisition parameter related variables
+            string sent;
+            double[] WaveformArray_Ch1 = { };
+            int recording_rate;
+            int record_size;
+            int nSamples;
+            int Prescaling;
+            double DE_dwellT;
+
+            // Generate scan arrays
+            if (scan_scheme == 1)
+            {
+                // passive scan settings
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                                                          // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+
+            }
+            else
+            {
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[y_step_num];
+                Yarray_vol = new double[y_step_num];
+            }
+
+
+            sent = "A total " + x_step_num.ToString() + " by " + y_step_num.ToString() + "scan positions will be generated by arbitrary wave generator.\n";
+            MessageBox.Text += sent;
+
+            GenerateROIScanArray(ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
+
+            // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
+            // calculate parameters for acquisition
+
+
+
+            recording_rate = fps * 10;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)(x_step_num * y_step_num * pixel_cycle / (double)fps * (double)recording_rate);
+            record_size = (int)(record_size * 1.1);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+            DE_dwellT = 1e-8 * Prescaling * nSamples;
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_dwellT, pixel_cycle,1);
+                }));
+
+
+            }).Start();
+
+            // start new thread for AWG
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, 1);
+
+            }).Start();
+        }
+
+
+        #endregion
+
+
+        // This function will be used as ROI 5DSTEM acquisition w/ or w/o drift correction 
+        #region 5D Acquisition
+        public void Acquisition_5D(object sender, RoutedEventArgs e)
+        {
+
+            // common variables for 4DSTEM
+            double x_scan_low = double.Parse(StartX.Text);
+            double x_scan_high = double.Parse(EndX.Text);
+            double y_scan_low = double.Parse(StartY.Text);
+            double y_scan_high = double.Parse(EndY.Text);
+            int x_step_num = int.Parse(PosX.Text);
+            int pixel_cycle = int.Parse(PixelCycle.Text);
+            int fps = Int32.Parse(FrameRate.Text);
+            bool isNumeric;
+            string pxx = PosX.Text;
+            // check whether X,Y position box contains number
+            isNumeric = int.TryParse(pxx, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("X position setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            // check whether Frame rate box contains number
+            isNumeric = int.TryParse(FrameRate.Text, out n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
+            // Specific variables for 5DSTEM
+            int Nmultiframes = int.Parse(FrameCycle.Text);  //Get settings for multiframe-acquire
+
+            //This function will assemble AWG and digitizer to acquire HAADF and 4DSTEM for a single frame
+            //must enable fetchdata finished, digitizer RAM refreshed, HAADF display shown, AWG stopped
+            ROI4DSTEMperFrame(x_scan_low, x_scan_high, y_scan_low, y_scan_high, x_step_num, fps, pixel_cycle);
+
+            //need to ask if triggers ends
+            if (FUNC_STATUS_RETURNS == )
+            {
+               
+            }
+
+        }
+
+
+        #endregion
+
+
+
+        #region load seq/mrc and save as emd(h5) file
+
+        private void SEQFilePath_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = SEQPath.Text;
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "Cursor Files|*.seq";
+            openFileDialog1.Title = "Select a Cursor File";
+            //System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                folder = openFileDialog1.FileName;
+            }
+            folder = folder.Replace("\\", "/");
+            SEQPath.Text = folder;
+        }
+
+
+        private void HAADFFilePath_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = HAADFPath.Text;
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                folder = dlg.SelectedPath;
+            }
+            folder = folder.Replace("\\", "/");
+            HAADFPath.Text = folder;
+        }
+
+        private void EMDFilePath_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = EMDPath.Text;
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                folder = dlg.SelectedPath;
+            }
+            folder = folder.Replace("\\", "/");
+            EMDPath.Text = folder;
+            string filename = EMDName.Text;
+            string fullpath = folder + "/" + filename + ".emd";
+        }
+
+        private void DiscardEMD_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = EMDPath.Text;
+            string filename = EMDName.Text;
+            string fullpath = folder + "/" + filename + ".emd";
+            File.Delete(fullpath);
+        }
+
+        // load mrc file that just acquired and do reconstrcution for BF/ABF
+        public void LoadnRecon_Click(object sender, RoutedEventArgs e)
+        {
+            // if EnableDetector option is not checked, change it to ture and use default BF range
+            if (EnableDetector.IsChecked == false)
+            {
+                EnableDetector.IsChecked = true;
+                DisableDetector.IsChecked = false;
+                slider_innerang.Value = 0;
+                slider_outerang.Value = 1;
+            }
+            // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
+
+            UInt32 sizex = 0;
+            UInt32 sizey = 0;
+            UInt16 numframe = 0;
+
+            //ReadMRCfile();
+            SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
+            string sent;
+            sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
+            MessageBox.Text += sent;
+            sent = " Each frame has " + sizex + " by " + sizey + " pixels.\n";
+            MessageBox.Text += sent;
+            UInt16[] FirstFrame = new UInt16[sizex * sizey];
+            SEQ.LoadFirstFrame(SEQPath.Text, ref FirstFrame);
+
+
+            // downsampling and rescale first frame before display in 400x400 px image box
+            int ratio = (int)Math.Ceiling((double)sizex / 400);
+            int sizex_resize = (int)Math.Floor((double)sizex / (double)ratio);
+            int sizey_resize = (int)Math.Floor((double)sizey / (double)ratio);
+            UInt16[] FirstFrame_resize = new UInt16[sizex_resize * sizey_resize];
+            double[] subArray = new double[ratio];
+            List<double> subArray_list = new List<double>();
+
+            for (int j = 0; j < sizey_resize; j++)
+            {
+                for (int i = 0; i < sizex_resize; i++)
+                {
+                    Array.Copy(FirstFrame, j * sizex + i * ratio, subArray, 0, ratio);
+                    subArray_list.Clear();
+                    subArray_list = subArray.ToList();
+                    if ((UInt16)subArray_list.Average() < 1500)
+                    {
+                        FirstFrame_resize[j * sizex_resize + i] = (UInt16)subArray_list.Average();
+                    }
+                }
+            }
+
+            UInt16 maxint = FirstFrame_resize.Max();
+            UInt16 minint = FirstFrame_resize.Min();
+            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)((double)r / (maxint - minint) * 65535)).ToArray();
+
+
+            int bytesPerPixel = 2;
+            int stride = sizex_resize * bytesPerPixel;
+            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96, 96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
+            pictureBox1.Source = FirstFramebmpSource;
+        }
+
+        private void ReconFromSEQ_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        // save the loaded mrc file to EMD format
+        private void ResaveEMD_Click(object sender, RoutedEventArgs e)
+        {
+            //HDF5.InitializeHDF(numpos, height, width);
+        }
+
+
+        // function to load 4DSTEM dataset from mrc file, resave as h5, and reconstruct to 2D image with virtual aperture
+        public void ReadMRCfile()
+        {
+            // start reading mrc file
+            string path_string = "";
+            string name_string = "";
+            _deInterface.GetProperty("Autosave Directory", ref path_string);
+            _deInterface.GetProperty("Autosave Frames - Previous Dataset Name", ref name_string);
+            path_string = path_string.Replace("\\", "/");
+            string path = path_string + "/" + name_string + "_RawImages.mrc";
+
+            using (var filestream = File.Open(@path, FileMode.Open))
+            using (var binaryStream = new BinaryReader(filestream))
+            {
+                // read headers
+                width = binaryStream.ReadInt32();
+                height = binaryStream.ReadInt32();
+                numpos = binaryStream.ReadInt32();
+                int format = binaryStream.ReadInt32();
+                for (var i = 0; i < 6; i++)    // the rest 6 integer numbers, int32, useless here
+                {
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
+                {
+                    binaryStream.ReadSingle();
+                    //Console.WriteLine(binaryStream.ReadSingle());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
+                {
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 8; i++)    // 8 chars
+                {
+                    binaryStream.ReadChar();
+                    //Console.WriteLine(binaryStream.ReadChar());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 2; i++)    // 2 integer numbers, int32
+                {
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
+                }
+                for (var i = 0; i < 10; i++)    // 10 strings
+                {
+                    binaryStream.ReadChars(80);
+                    //Console.WriteLine(binaryStream.ReadChars(80));
+                }
+
+                // finish reading headers
+                UInt16[,,] datacube = new UInt16[width, height, numpos];
+
+                // 3D array created for reconstruction and HDF5 file
+                for (var ilayer = 0; ilayer < numpos; ilayer++)
+                {
+                    for (var iy = 0; iy < height; iy++)
+                    {
+                        for (var ix = 0; ix < width; ix++)
+                        {
+                            datacube[ix, iy, ilayer] = binaryStream.ReadUInt16(); // [ix, iy, ilayer], correspond to [col, row, layer]
+                        }
+                    }
+                }
+
+                // start reconstruction and show reconstruction result if option enabled
+                string StrX = null;
+                string StrY = null;
+                int px = 0, py = 0;
+
+                // create H5 file with attributes and data
+                string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd";
+                //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
+
+
+                PosX.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrX = PosX.Text; }
+                    );
+                PosY.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrY = PosX.Text; }
+                    );
+
+                if (Int32.TryParse(StrX, out px))
+                {
+                    if (Int32.TryParse(StrY, out py))
+                    {
+                        if (numpos == px * py)
+                        {
+                            Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
+                            UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
+                            UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
+                            ushort sum = 0;
+                            int min = 65535;
+                            int max = 0;
+                            recon_scale[0] = 255;
+                            BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
+                            InitializeWBmpRecon(ReconBitmapSource);
+                            for (var iy = 0; iy < py; iy++)
+                            {
+                                for (var ix = 0; ix < px; ix++)
+                                {
+                                    UInt16[] imagelayer = ExtractArray(datacube, iy * px + ix, width, height);
+                                    double innerang = 0;
+                                    double outerang = 0;
+                                    slider_innerang.Dispatcher.Invoke(
+                                        (ThreadStart)delegate { innerang = slider_innerang.Value; }
+                                        );
+                                    slider_outerang.Dispatcher.Invoke(
+                                        (ThreadStart)delegate { outerang = slider_outerang.Value; }
+                                        );
+                                    sum = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
+                                    recon[iy * px + ix] = sum;
+                                    if (recon[iy * px + ix] < min) min = recon[iy * px + ix];
+                                    if (recon[iy * px + ix] > max) max = recon[iy * px + ix]; //update max and min after recon array changed
+                                    for (int i = 0; i < iy * px + ix; i++)
+                                    {
+                                        recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min if scale changed
+                                    }
+                                }
+                            }
+                            this.Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
+
+                            }));
+
+                        }
+                    }
+                }
+            }
         }
 
         #endregion
