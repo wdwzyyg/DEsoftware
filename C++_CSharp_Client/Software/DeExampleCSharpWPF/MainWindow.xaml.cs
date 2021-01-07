@@ -660,6 +660,8 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                Console.WriteLine("*********Current thread", Thread.CurrentThread.ManagedThreadId);
+
                 this.Dispatcher.Invoke((Action)(() =>
                 {
                     int sizex = x_step_num;
@@ -676,7 +678,7 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
-
+                Console.WriteLine("*********Current thread", Thread.CurrentThread.ManagedThreadId);
             }).Start();
 
         }
@@ -1278,10 +1280,10 @@ namespace DeExampleCSharpWPF
             ROI4DSTEMperFrame(x_scan_low, x_scan_high, y_scan_low, y_scan_high, x_step_num, fps, pixel_cycle);
 
             //need to ask if triggers ends
-            if (FUNC_STATUS_RETURNS == )
-            {
+            //if (FUNC_STATUS_RETURNS == )
+            //{
                
-            }
+            //}
 
         }
 
