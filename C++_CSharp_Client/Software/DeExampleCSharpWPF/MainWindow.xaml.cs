@@ -72,7 +72,7 @@ namespace DeExampleCSharpWPF
         // scan mode, 0 for DE in master mode, 1 for DE in slave mode. Currenly always run in slave mode.
         public int scan_mode = 1;
 
-        
+
         public decimal Fps
         {
             get { return Math.Round(Convert.ToDecimal(Convert.ToDouble(_imageCount) / TotalSeconds), 3); }
@@ -80,7 +80,7 @@ namespace DeExampleCSharpWPF
 
         }
 
-        
+
         public int ImageCount
         {
             get { return _imageCount; }
@@ -341,7 +341,7 @@ namespace DeExampleCSharpWPF
             // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
 
             float dwellT = float.Parse(FrameRate_2D.Text);  // FrameRate_2D actually contains dwell time, not frequency
-            int fps = (int)Math.Floor(1000000/dwellT);
+            int fps = (int)Math.Floor(1000000 / dwellT);
 
             // set new thread for digitizer
 
@@ -388,7 +388,7 @@ namespace DeExampleCSharpWPF
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
                 this.Dispatcher.Invoke((Action)(() =>
                 {
-                   HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
                 }));
 
 
@@ -436,7 +436,7 @@ namespace DeExampleCSharpWPF
                     {
                         Xarray_index[ix * pixel_cycle + ixp] = ix;
                     }
-                    
+
                     Xarray_vol[ix] = -0.5 + x_step_size * ix;
                 }
 
@@ -595,7 +595,7 @@ namespace DeExampleCSharpWPF
             {
                 // passive scan settings
                 Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-                                                                            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                                                          // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
                 Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
                 Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
                 Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
@@ -636,7 +636,7 @@ namespace DeExampleCSharpWPF
 
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
-            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes/ (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
             record_size = (int)(record_size * 1.1);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
@@ -689,10 +689,10 @@ namespace DeExampleCSharpWPF
         public void GenerateScanArray(ref int[] Xarray_index, ref int[] Yarray_index, ref double[] Xarray_vol, ref double[] Yarray_vol)
         {
             // fractional scan range between [-0.5, 0.5]
-            double x_scan_low = (double.Parse(StartX.Text) - 256)/256/2;
-            double x_scan_high = (double.Parse(EndX.Text) - 256)/256/2;
-            double y_scan_low = (double.Parse(StartY.Text) - 256)/256/2;
-            double y_scan_high = (double.Parse(EndY.Text) - 256)/256/2;
+            double x_scan_low = (double.Parse(StartX.Text) - 256) / 256 / 2;
+            double x_scan_high = (double.Parse(EndX.Text) - 256) / 256 / 2;
+            double y_scan_low = (double.Parse(StartY.Text) - 256) / 256 / 2;
+            double y_scan_high = (double.Parse(EndY.Text) - 256) / 256 / 2;
 
             // Force x,y scan to have same step size, i.e. square pixel, calculate y_step num based on step size and ROI shape
             int x_step_num = int.Parse(PosX.Text);
@@ -759,7 +759,7 @@ namespace DeExampleCSharpWPF
                 status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D, Nmultiframes);
             }
         }
-        
+
         public int RecordingRateLookup(int recording_rate)
         {
             int refined_rate = recording_rate;
@@ -861,7 +861,7 @@ namespace DeExampleCSharpWPF
 
         }
 
-        public FUNC_STATUS_RETURNS HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
         {
             // Generate new array for rescaled HAADF image
             UInt16[] HAADF_rescale = new UInt16[size_x * size_y * framecycle];
@@ -966,15 +966,13 @@ namespace DeExampleCSharpWPF
             if (ReferenceEquals(fi, null))
             {
                 System.Windows.Forms.MessageBox.Show("HAADF saving path is not valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //FUNC_STATUS_RETURNS HAADFSHOW = FUNC_STATUS_RETURNS.FUNC_UNFINISHED;
             }
             else
             {
                 File.WriteAllText(FullPath, csv.ToString());
                 File.WriteAllText(FullPath_raw, csv_raw.ToString());
-                //FUNC_STATUS_RETURNS HAADFSHOW = FUNC_STATUS_RETURNS.FUNC_FINISHED;
             }
-            return FUNC_STATUS_RETURNS.FUNC_FINISHED;
+            return;
         }
 
         private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -1219,9 +1217,12 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                Console.WriteLine($"************Fetching data thread{ Thread.CurrentThread.ManagedThreadId}");
                 this.Dispatcher.Invoke((Action)(() =>
                 {
-                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_dwellT, pixel_cycle,1);
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_dwellT, pixel_cycle, 1);
+                    Console.WriteLine($"**********HAADF reconstruction dispatcher{ Thread.CurrentThread.ManagedThreadId}");
+
                 }));
 
 
@@ -1233,8 +1234,10 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, 1);
+                Console.WriteLine($"**********Push AWG setting thread{ Thread.CurrentThread.ManagedThreadId}");
 
             }).Start();
+
         }
 
 
@@ -1280,10 +1283,7 @@ namespace DeExampleCSharpWPF
             ROI4DSTEMperFrame(x_scan_low, x_scan_high, y_scan_low, y_scan_high, x_step_num, fps, pixel_cycle);
 
             //need to ask if triggers ends
-            //if (FUNC_STATUS_RETURNS == )
-            //{
-               
-            //}
+
 
         }
 
@@ -1559,7 +1559,7 @@ namespace DeExampleCSharpWPF
         // start live view by clicking 'stream from DE'
         public void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
-            
+
             if (_liveModeEnabled)
             {
                 _liveModeEnabled = false;
@@ -1569,14 +1569,14 @@ namespace DeExampleCSharpWPF
             }
             else
             {
-                
+
                 //HDF5.InitializeHDF();   // initialize the HDF file used to save 3D data cube
                 bool ImageRecon = false;
                 if (EnableDetector.IsChecked == true) ImageRecon = true;
                 ImageCount = 0;
                 semaphore = new Semaphore(0, 1);
                 new LiveModeView();
- //               Closing += LiveViewWindow_Closing;
+                //               Closing += LiveViewWindow_Closing;
                 InitializeWBmp(GetImage()); // only used to display image on imagebox.1
                 Show();
                 _updateTimer = new System.Timers.Timer(10);
@@ -1620,8 +1620,8 @@ namespace DeExampleCSharpWPF
                 }
 
                 //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height);
-                UInt16[,,] datacube = new UInt16[numpos,width,height];    // generate the data cube, each value should be an integer
-                UInt16[] image = new UInt16[width*height];  // 1D image array used to save temp 2D frame
+                UInt16[,,] datacube = new UInt16[numpos, width, height];    // generate the data cube, each value should be an integer
+                UInt16[] image = new UInt16[width * height];  // 1D image array used to save temp 2D frame
                 // generate reconstruction bitmap and initialize _wBmpRecon
                 UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
                 UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
@@ -1658,12 +1658,12 @@ namespace DeExampleCSharpWPF
                                 slider_outerang.Dispatcher.Invoke(
                                     (ThreadStart)delegate { outerang = slider_outerang.Value; }
                                     );
-                                
-                                recon[ImageCount-1] = IntegrateBitmap(image, width, height, innerang, outerang);
+
+                                recon[ImageCount - 1] = IntegrateBitmap(image, width, height, innerang, outerang);
                             }
-                            if(ImageCount==1 && ImageRecon)   // case for first pixel
+                            if (ImageCount == 1 && ImageRecon)   // case for first pixel
                             {
-                                
+
                                 min = recon[0];
                                 max = recon[0];
                                 recon_scale[0] = 255;  // rescale with new max and min
@@ -1682,7 +1682,7 @@ namespace DeExampleCSharpWPF
                                 }
                             }
 
-                            if(ImageCount > 1 && ImageRecon)
+                            if (ImageCount > 1 && ImageRecon)
                             {
                                 // imagecount would increase by 1 after setimage function, one more number on recon array
                                 if (recon[ImageCount - 1] < min) min = recon[ImageCount - 1];
@@ -1700,7 +1700,7 @@ namespace DeExampleCSharpWPF
                                 {
                                     for (int y = 0; y < height; y++)
                                     {
-                                        datacube[ImageCount-1, x, y] = image[x*height+y];
+                                        datacube[ImageCount - 1, x, y] = image[x * height + y];
                                     }
                                 }
                             }
@@ -1919,10 +1919,10 @@ namespace DeExampleCSharpWPF
             System.Drawing.Bitmap flag = new System.Drawing.Bitmap(pxx, pxy);
             for (int x = 0; x < pxx; x++)
             {
-                for (int y = 0; y < pxy ; y++)
+                for (int y = 0; y < pxy; y++)
                 {
                     int pixel = pxx * y + x;
-                    flag.SetPixel(x, y, System.Drawing.Color.FromArgb(imagedata[pixel],imagedata[pixel],imagedata[pixel]));
+                    flag.SetPixel(x, y, System.Drawing.Color.FromArgb(imagedata[pixel], imagedata[pixel], imagedata[pixel]));
                 }
             }
 
@@ -1975,7 +1975,7 @@ namespace DeExampleCSharpWPF
 
             }));
             ImageCount++;
-            
+
         }
 
         // use 1D array as input, sum up intensity within range to return one single value
@@ -1991,33 +1991,33 @@ namespace DeExampleCSharpWPF
             {
                 outerang = pxy * outerang;
             }
-                // use the smaller one among pxx and pxy to calculate outerang
+            // use the smaller one among pxx and pxy to calculate outerang
             innerang = outerang * innerang;
-            UInt16 sum=0;
-            for (int i = 0; i<pxx; i++)
+            UInt16 sum = 0;
+            for (int i = 0; i < pxx; i++)
             {
-                for (int j = 0; j < pxy;j++)
+                for (int j = 0; j < pxy; j++)
                 {
                     double distance = Math.Pow(Convert.ToDouble(i - centerx), 2) + Math.Pow(Convert.ToDouble(j - centery), 2);
                     distance = Math.Sqrt(distance);
                     if (distance < outerang && distance > innerang)
                     {
-                        sum += imageData[i+j*pxx];
+                        sum += imageData[i + j * pxx];
                     }
                 }
             }
             return sum;
         }
 
-/*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
-        {
-            _liveModeEnabled = false;
-            Dispatcher.BeginInvoke((Action)(() =>
-            {
-                btnLiveCapture.Content = "Test Load Image Speed";
-            }));
-        }
-*/
+        /*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
+                {
+                    _liveModeEnabled = false;
+                    Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        btnLiveCapture.Content = "Test Load Image Speed";
+                    }));
+                }
+        */
 
         // only get useful properties instead of getting all properties
         private void cmbCameras_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2140,27 +2140,25 @@ namespace DeExampleCSharpWPF
 
 
 
+
         #endregion
 
 
-    }
 
+        /*        #region INotifyPropertyChanged
 
-
-
-    /*        #region INotifyPropertyChanged
-
-            public event PropertyChangedEventHandler PropertyChanged;
-            private void NotifyPropertyChanged(String info)
-            {
-                if (PropertyChanged != null)
+                public event PropertyChangedEventHandler PropertyChanged;
+                private void NotifyPropertyChanged(String info)
                 {
-                    PropertyChanged(this, new PropertyChangedEventArgs(info));
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs(info));
+                    }
                 }
-            }
 
-            #endregion
-    */
+                #endregion
+        */
+    }
 }
 
     public class Property

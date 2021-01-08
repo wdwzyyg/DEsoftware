@@ -225,8 +225,9 @@
 
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
-                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>
+                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="142" Width="500" VerticalAlignment="Top"/>
                 </StackPanel>
+                <Button Content="5DSTEM" HorizontalAlignment="Left" Height="44" Margin="66,0,0,0" Width="84" Click="Acquisition_5D"/>
 
             </StackPanel>
 
