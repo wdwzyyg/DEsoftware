@@ -134,6 +134,9 @@ namespace DeExampleCSharpWPF
             FUNC_FINISHED,
             FUNC_UNFINISHED
         }
+
+        private static readonly object LOCKdigi = new object();
+        private static readonly object LOCKawg = new object();
         #endregion
 
         #region initialize and close main window
@@ -382,28 +385,34 @@ namespace DeExampleCSharpWPF
             double DE_fps;
             DE_fps = 1e-8 * Prescaling * nSamples;
 
-            new Thread(() =>
+            Action Digi = () =>
             {
                 Thread.CurrentThread.IsBackground = true;
+                //Console.WriteLine($"************Fetching data thread{ Thread.CurrentThread.ManagedThreadId}");
+
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
                 this.Dispatcher.Invoke((Action)(() =>
                 {
                     HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
                 }));
+                Console.WriteLine($"************HAADFreconstrcution thread{ Thread.CurrentThread.ManagedThreadId}");
 
+            };
+            Task task1 = new Task(Digi);
+            task1.Start();
 
-            }).Start();
-
-            // start new thread for AWG
-
-            new Thread(() =>
+            Action AWG = () =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 1, 1);
+                Console.WriteLine($"************PushAWGsetting thread{ Thread.CurrentThread.ManagedThreadId}");
 
-            }).Start();
-
+            };
+            Task task2 = new Task(Digi);
+            task2.Start();
         }
+
+
 
         // Function to acquire single 4DSTEM dataset with full frame, i.e. max voltage range.
         // Number of beam positions will follow GUI settings
@@ -1144,7 +1153,7 @@ namespace DeExampleCSharpWPF
 
         }
 
-        public void ROI4DSTEMperFrame(double x_scan_low, double x_scan_high, double y_scan_low, double y_scan_high, int x_step_num, int fps, int pixel_cycle)
+        private void ROI4DSTEMperFrame(double x_scan_low, double x_scan_high, double y_scan_low, double y_scan_high, int x_step_num, int fps, int pixel_cycle)
         {
             // Variables related to scan arrays
             int[] Xarray_index;
@@ -1244,29 +1253,103 @@ namespace DeExampleCSharpWPF
         #endregion
 
 
-        // This function will be used as ROI 5DSTEM acquisition w/ or w/o drift correction 
+        //This function will be used as ROI 5DSTEM acquisition w/ or w/o drift correction
         #region 5D Acquisition
-        public void Acquisition_5D(object sender, RoutedEventArgs e)
+        private void Acquisition_5D(object sender, RoutedEventArgs e)
         {
 
-            // common variables for 4DSTEM
-            double x_scan_low = double.Parse(StartX.Text);
-            double x_scan_high = double.Parse(EndX.Text);
-            double y_scan_low = double.Parse(StartY.Text);
-            double y_scan_high = double.Parse(EndY.Text);
-            int x_step_num = int.Parse(PosX.Text);
-            int pixel_cycle = int.Parse(PixelCycle.Text);
-            int fps = Int32.Parse(FrameRate.Text);
-            bool isNumeric;
+            //// common variables for 4DSTEM
+            //double x_scan_low = double.Parse(StartX.Text);
+            //double x_scan_high = double.Parse(EndX.Text);
+            //double y_scan_low = double.Parse(StartY.Text);
+            //double y_scan_high = double.Parse(EndY.Text);
+            //int x_step_num = int.Parse(PosX.Text);
+            //int pixel_cycle = int.Parse(PixelCycle.Text);
+            //int fps = Int32.Parse(FrameRate.Text);
+            //bool isNumeric;
+            //string pxx = PosX.Text;
+            //// check whether X,Y position box contains number
+            //isNumeric = int.TryParse(pxx, out int n);
+            //if (!isNumeric)
+            //{
+            //    System.Windows.Forms.MessageBox.Show("X position setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
+            //// check whether Frame rate box contains number
+            //isNumeric = int.TryParse(FrameRate.Text, out n);
+            //if (!isNumeric)
+            //{
+            //    System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
+
+
+            //// Specific variables for 5DSTEM
+            //int Nmultiframes = int.Parse(FrameCycle.Text);  //Get settings for multiframe-acquire
+
+            ////This function will assemble AWG and digitizer to acquire HAADF and 4DSTEM for a single frame
+            ////must enable fetchdata finished, digitizer RAM refreshed, HAADF display shown, AWG stopped
+            //ROI4DSTEMperFrame(x_scan_low, x_scan_high, y_scan_low, y_scan_high, x_step_num, fps, pixel_cycle);
+
             string pxx = PosX.Text;
+            string sent;
             // check whether X,Y position box contains number
-            isNumeric = int.TryParse(pxx, out int n);
+            bool isNumeric = int.TryParse(pxx, out int n);
             if (!isNumeric)
             {
                 System.Windows.Forms.MessageBox.Show("X position setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            // check whether Frame rate box contains number
+
+            // Initialize array for scan index and voltage
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
+
+            // Calculate y_step_num based on x_step num and scan region box
+            double x_scan_low = double.Parse(StartX.Text);
+            double x_scan_high = double.Parse(EndX.Text);
+            double y_scan_low = double.Parse(StartY.Text);
+            double y_scan_high = double.Parse(EndY.Text);
+            int x_step_num = int.Parse(PosX.Text);
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = x_step_size;
+            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            //Get settings for multiframe-acquire
+            int Nmultiframes = int.Parse(FrameCycle.Text);
+
+            if (scan_scheme == 1)
+            {
+                // passive scan settings
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                                                          // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+
+            }
+            else
+            {
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[y_step_num];
+                Yarray_vol = new double[y_step_num];
+            }
+
+            double[] WaveformArray_Ch1 = { };
+
+            sent = "A total " + x_step_num.ToString() + " by " + y_step_num.ToString() + "scan positions will be generated by arbitrary wave generator.\n";
+            MessageBox.Text += sent;
+
+
+
+            GenerateScanArray(ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
+
+
+            // set new thread for digitizer
+
             isNumeric = int.TryParse(FrameRate.Text, out n);
             if (!isNumeric)
             {
@@ -1275,14 +1358,97 @@ namespace DeExampleCSharpWPF
             }
 
 
-            // Specific variables for 5DSTEM
-            int Nmultiframes = int.Parse(FrameCycle.Text);  //Get settings for multiframe-acquire
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int pixel_cycle = int.Parse(PixelCycle.Text);
+            int record_size;
+            recording_rate = RecordingRateLookup(recording_rate);
 
-            //This function will assemble AWG and digitizer to acquire HAADF and 4DSTEM for a single frame
-            //must enable fetchdata finished, digitizer RAM refreshed, HAADF display shown, AWG stopped
-            ROI4DSTEMperFrame(x_scan_low, x_scan_high, y_scan_low, y_scan_high, x_step_num, fps, pixel_cycle);
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.1);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
 
-            //need to ask if triggers ends
+            int nSamples;
+            int Prescaling;
+            int fps = Int32.Parse(FrameRate.Text);
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+
+            double DE_fps;
+            DE_fps = 1e-8 * Prescaling * nSamples;
+
+            //*********************
+            // parameters for 5D
+            int timeinterval = 10000; //e.g. pause 10 s between frame cycles
+            int framinterval = 2; //e.g. do driftcorrection every 2 frame cycle
+
+            for (int i = 0; i < Nmultiframes; i++)
+            {
+                 // seem that stil cannot guarantee run in order of i  
+                if ((i+1) % framinterval != 0) // Check if this is the cycle for correction, if not, start threads
+                {
+                    Action Digi = () =>
+                    {
+
+                        lock (LOCKdigi)// to keep only one threading running
+                        {
+                            Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                            Console.WriteLine($"************Fetching data thread{ Thread.CurrentThread.ManagedThreadId}");
+                            this.Dispatcher.Invoke((Action)(() =>
+                            {
+                                HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
+                            }));
+                            Console.WriteLine($"************HAADFreconstrcution thread{ Thread.CurrentThread.ManagedThreadId}");
+                            Thread.Sleep(timeinterval);// where to put this is a question
+
+                        }
+
+                    };
+                    Task task1 = new Task(Digi);
+                    task1.Start();
+
+                    Action AWG = () =>
+                    {
+                        lock (LOCKawg)
+                        {
+                            PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 1, 1);
+                            Console.WriteLine($"************PushAWGsetting thread{ Thread.CurrentThread.ManagedThreadId}");
+                        }
+
+                    };
+                    Task task2 = new Task(AWG);
+                    task2.Start();
+
+                    //go to next frame only if all actions in this framecycle are completed
+                    if (task1.Wait(-1) & task2.Wait(-1))
+                    {
+                        continue;
+                    }
+                }
+
+                else
+                {
+                    Console.WriteLine("I am going to do correction");
+                    // call drift correction methods here
+
+                }
+                
+
+
+            }
+
+
+
+            
+
 
 
         }
@@ -2143,7 +2309,7 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
-
+    }
 
         /*        #region INotifyPropertyChanged
 
@@ -2158,7 +2324,7 @@ namespace DeExampleCSharpWPF
 
                 #endregion
         */
-    }
+    
 }
 
     public class Property
