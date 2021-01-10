@@ -398,8 +398,6 @@ namespace DeExampleCSharpWPF
                 Console.WriteLine($"************HAADFreconstrcution thread{ Thread.CurrentThread.ManagedThreadId}");
 
             };
-            Task task1 = new Task(Digi);
-            task1.Start();
 
             Action AWG = () =>
             {
@@ -408,9 +406,13 @@ namespace DeExampleCSharpWPF
                 Console.WriteLine($"************PushAWGsetting thread{ Thread.CurrentThread.ManagedThreadId}");
 
             };
-            Task task2 = new Task(Digi);
+
+            Task task1 = new Task(Digi);
+            task1.Start();
+            Task task2 = new Task(AWG);
             task2.Start();
         }
+
 
 
 
