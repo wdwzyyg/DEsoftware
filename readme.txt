@@ -1,10 +1,4 @@
-#####################################################
-The working version for 5D-STEM with drift correction
-#####################################################
-
 Direct Electron image acquisition software for 4D STEM
-
-latest version tested on Titan
 
 Developed in Visual Studio 2015
 
