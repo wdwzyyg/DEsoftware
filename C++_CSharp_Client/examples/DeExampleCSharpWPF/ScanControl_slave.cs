@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
+using System.Windows.Forms;
 
 // 6/20/18 start working on scan control API for DE in slave mode
 
@@ -24,32 +25,6 @@ namespace ScanControl_slave
         private List<int> xindex;
         private List<int> yindex;
 
-        public HW_STATUS_RETURNS CancelScan()
-        {
-            int status;
-            // Channel 1 for y scan and channel 2 for x scan
-
-            //Create an instance of the AOU module
-            SD_AOU moduleAOU = new SD_AOU();
-            string ModuleName = "M3201A";
-            int nChassis = 0;
-            int nSlot = 7;
-
-            if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
-            {
-                Console.WriteLine("Error openning the Module 'M3201A', make sure the slot and chassis are correct. Aborting..." + status);
-                Console.ReadKey();
-
-                return HW_STATUS_RETURNS.HW_SUCCESS;
-            }
-            status = moduleAOU.AWGflush(1);
-            status = moduleAOU.AWGflush(2);
-            status = moduleAOU.AWGflush(3);
-            status = moduleAOU.AWGflush(4);
-
-            return HW_STATUS_RETURNS.HW_SUCCESS;
-
-        }
 
         public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate, int Option2D)
         {
@@ -61,9 +36,11 @@ namespace ScanControl_slave
             string ModuleName = "M3201A";
             int nChassis = 1;
             int nSlot = 7;
-
-            if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
+            int modelID;
+            if ((modelID = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
             {
+                System.Windows.Forms.MessageBox.Show("The scan system is not successfully initialized. Restart the control box and then resstart computer. If still not solved, talk to Jingrui.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                 Console.WriteLine("Error openning the Module 'M3201A', make sure the slot and chassis are correct. Aborting...");
                 Console.ReadKey();
 
@@ -77,10 +54,11 @@ namespace ScanControl_slave
             int Prescaling;
 
             nSamples = (int) Math.Ceiling(1.05e8 / recording_rate / 4095);
+            nSamples = (nSamples / 5) * 5;
             Prescaling = (int) Math.Ceiling(1.05e8 / recording_rate / nSamples);
-            while (Prescaling > 1.10e8/recording_rate/nSamples || nSamples == 1)
+            while (Prescaling > 1.10e8/recording_rate/nSamples || nSamples == 0 || Prescaling  > 4095)
             {
-                nSamples++;
+                nSamples = nSamples+5;
                 Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
             }
 
@@ -159,6 +137,7 @@ namespace ScanControl_slave
             length_x = Waveform_X.Length;
             Console.WriteLine("Array length of X waveform points is" + length_x);
 
+
             // generate SD_wave from array
             var SD_Waveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_X);
 
@@ -198,10 +177,13 @@ namespace ScanControl_slave
                 }
             }
 
-            //Check the size of waveform_x array 
+            //Check the size of waveform_y array
             int length_y;
             length_y = Waveform_Y.Length;
             Console.WriteLine("Array length of Y waveform points is" + length_y);
+
+
+
 
             var SD_Waveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_Y);
             status = moduleAOU.waveformLoad(SD_Waveform_Y, 1, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
@@ -301,12 +283,21 @@ namespace ScanControl_slave
                 moduleAOU.AWGstartMultiple(15);
             else
                 moduleAOU.AWGstartMultiple(11); // don't start channel 3 for DE trigger if doing 2D scan mode
-            //moduleAOU.AWGstartMultiple(3);
+                                                //moduleAOU.AWGstartMultiple(3);
 
+            if ((status = moduleAOU.close()) < 0)
+            {
+
+                Console.WriteLine("Error closing the Module 'M3201A'");
+                Console.ReadKey();
+
+                return HW_STATUS_RETURNS.HW_SUCCESS;
+            }
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
 
         }
+
 
     }
 }

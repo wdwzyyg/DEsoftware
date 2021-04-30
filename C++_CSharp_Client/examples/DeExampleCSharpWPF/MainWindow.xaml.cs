@@ -247,12 +247,12 @@ namespace DeExampleCSharpWPF
         #region Acquire HAADF and choose ROI
 
         // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
-        private void CancelAcq(object sender, RoutedEventArgs e)
-        {
-            ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
-            status.CancelScan();
-            Console.WriteLine("AWG HAS BEEN FLUSHED");
-        }
+        //private void CancelAcq(object sender, RoutedEventArgs e)
+        //{
+        //    ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
+        //    status.CancelScan();
+        //    Console.WriteLine("AWG HAS BEEN FLUSHED");
+        //}
 
 
         // Funtion to acquire traditional 2DSTEM image with full frame

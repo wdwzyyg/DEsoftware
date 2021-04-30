@@ -136,3 +136,27 @@ C:\Users\Admin\Desktop\DE\DEsoftware-master\C++_CSharp_Client\examples\DeExample
 C:\Users\Admin\Desktop\DE\DEsoftware-master\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.dll
 C:\Users\Admin\Desktop\DE\DEsoftware-master\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\HDF5DotNet.dll
 C:\Users\Admin\Desktop\DE\DEsoftware-master\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CopyComplete
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe.config
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.dll
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\HDF5DotNet.dll
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csprojAssemblyReference.cache
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\ImageView.baml
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.baml
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.baml
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\Simple Styles.baml
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\App.baml
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\ImageView.g.cs
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.g.cs
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.g.cs
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\App.g.cs
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_Content.g.cs
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_MarkupCompile.cache
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.g.resources
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.Properties.Resources.resources
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.GenerateResource.cache
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CopyComplete
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\Admin\Desktop\DE\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.pdb

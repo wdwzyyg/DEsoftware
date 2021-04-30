@@ -138,7 +138,6 @@
                         <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
                         <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
-                        <Button x:Name="CancelAcquisition" Content="Cancel Acquisition" Height="33" Width="132" Margin="0,50,0,0" Click="CancelAcq" FontSize="14"/>
 
                     </StackPanel>
 
