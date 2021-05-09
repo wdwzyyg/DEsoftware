@@ -4,24 +4,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows;
 using Ivi.Driver.Interop;
 using Keysight.KtM9217.Interop;
+using System.Windows.Input;
 #endregion 
 
 // this cannot run at the same time as soft front panel of digitizer
 // This will only work on DE compute with Keysight libraries installed
 namespace Digitizer
 {
+
     class Program
     {
-        [STAThread]
-
-        public static void CancelAcquisition()
-        {
-
-        }
         
+
+        [STAThread] 
         public static void FetchData( int record_size, int recording_rate, ref double[] WaveformArray_Ch1)
         {
             Console.WriteLine(" PrintProperties");
@@ -113,11 +111,32 @@ namespace Digitizer
                 driver.Channels.get_Item("Channel1").Measurement.FetchWaveformReal64(ref WaveformArray_Ch1, ref ActualPoints_Ch1, ref FirstValidPoint_Ch1, ref InitialXOffset_Ch1, ref InitialXTimeSeconds_Ch1, ref InitialXTimeFraction_Ch1, ref XIncrement_Ch1);
                 #endregion
 
+                ////Abort acquisition when type esc
+                //try
+                //{
+                //    if (Console.KeyAvailable)
+                //    {
+                //        ConsoleKeyInfo ckid = Console.ReadKey(false);
+                //        if (ckid.Key == ConsoleKey.Escape)
+                //        {
+                //                driver.Acquisition.Abort();
+                //                Console.WriteLine("Digitizer acquisition aborted.");                      
+                //        }
+                //    }
+
+                //}
+                //catch (Exception ex)
+                //{
+                //    Console.WriteLine(ex.Message);
+                //}
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+
+
             finally
             {
                 if (driver != null && driver.Initialized)

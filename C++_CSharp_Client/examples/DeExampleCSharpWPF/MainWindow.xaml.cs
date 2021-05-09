@@ -72,6 +72,8 @@ namespace DeExampleCSharpWPF
         // scan mode, 0 for DE in master mode, 1 for DE in slave mode. Currenly always run in slave mode.
         public int scan_mode = 1;
 
+        // read key for cancel acquisition
+        //public ConsoleKeyInfo cki;
 
         public decimal Fps
         {
@@ -127,6 +129,8 @@ namespace DeExampleCSharpWPF
             HW_SUCCESS,
             HW_OTHER
         }
+
+
         #endregion
 
         #region initialize and close main window
@@ -521,9 +525,9 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-                //this.Dispatcher.Invoke((Action)(() =>
+               //this.Dispatcher.Invoke((Action)(() =>
                // {
-                //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
+               //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
                // }));
 
             }).Start();
@@ -619,25 +623,25 @@ namespace DeExampleCSharpWPF
                
             }
 
-            // write to different bitmap for different options
+            //// write to different bitmap for different options
 
-            int bytesPerPixel = 2;
-            int stride = size_x * bytesPerPixel;
-            // No flipLR now.
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
+            //int bytesPerPixel = 2;
+            //int stride = size_x * bytesPerPixel;
+            //// No flipLR now.
+            //BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
 
 
 
-            // invoke different image box source for different options
-            if (option == 0)
-            {
-                HAADF.Source = HAADFbmpSource;
-            }
+            //// invoke different image box source for different options
+            //if (option == 0)
+            //{
+            //    HAADF.Source = HAADFbmpSource;
+            //}
 
-            if (option == 1)
-            {
-                HAADFacquisition.Source = HAADFbmpSource;
-            }
+            //if (option == 1)
+            //{
+            //    HAADFacquisition.Source = HAADFbmpSource;
+            //}
 
             // save HAADF raw data to csv file
 
@@ -1038,7 +1042,7 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
-        #region Set AWG and digitizer
+        #region Set AWG and digitizer for ROI4DSTEM
         // This function is currently being used to do ROI 4DSTEM acquisition
         private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
@@ -1898,9 +1902,7 @@ namespace DeExampleCSharpWPF
         }
 
 
-
         #endregion
-
 
     }
 

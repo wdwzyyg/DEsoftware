@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
 using System.Windows.Forms;
+using System.Windows.Input;
 
 // 6/20/18 start working on scan control API for DE in slave mode
 
@@ -285,14 +287,32 @@ namespace ScanControl_slave
                 moduleAOU.AWGstartMultiple(11); // don't start channel 3 for DE trigger if doing 2D scan mode
                                                 //moduleAOU.AWGstartMultiple(3);
 
+            //// Flush channels and delete waveform onboard when type esc
+            //if (Console.KeyAvailable)
+            //{
+            //    ConsoleKeyInfo cki = Console.ReadKey(false);
+            //    if (cki.Key == ConsoleKey.Escape)
+            //    {
+            //        moduleAOU.waveformFlush();
+            //        moduleAOU.AWGstop(1);
+            //        moduleAOU.AWGstop(2);
+            //        moduleAOU.AWGstop(3);
+            //        moduleAOU.AWGstop(4);
+            //        moduleAOU.close();
+            //        Console.WriteLine("AWG stopped and module closed.");
+            //    }
+            //}
+
             if ((status = moduleAOU.close()) < 0)
             {
 
                 Console.WriteLine("Error closing the Module 'M3201A'");
-                Console.ReadKey();
+                //Console.ReadKey();
 
                 return HW_STATUS_RETURNS.HW_SUCCESS;
             }
+
+
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
 
