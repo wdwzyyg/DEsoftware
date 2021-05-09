@@ -28,7 +28,7 @@ namespace ScanControl_slave
         private List<int> yindex;
 
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate, int Option2D)
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate, int Option2D, int Nmultiframes)
         {
             int status;
             // Channel 1 for y scan and channel 2 for x scan
@@ -131,7 +131,15 @@ namespace ScanControl_slave
                 {
                     Waveform_X[Count] = xpoints[xindex[xindex.Count - ix - 1]];
                     Count++;
+                    //if (Count == nSamples * xindex.Count())
+                    //{
+                    //    break;  // End waveform generation when the waveform is full
+                    //}
                 }
+                //if (Count == nSamples * xindex.Count())
+                //{
+                //    break;  // Also break the outer loop, in case the delay length is more than one beam position
+                //}
             }
 
             //Check the size of waveform_x array 
@@ -139,71 +147,59 @@ namespace ScanControl_slave
             length_x = Waveform_X.Length;
             Console.WriteLine("Array length of X waveform points is" + length_x);
 
-
-            // generate SD_wave from array
-            var SD_Waveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_X);
-
-            // load generated SD_wave to waveform #0
-            status = moduleAOU.waveformLoad(SD_Waveform_X, 0, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
-            if (status < 0)
-            {
-                Console.WriteLine("Error while loading x waveform");
-            }
-            //Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
-
-            // queue waveform into channel 2 and loop for yindex.count() times
-            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling); // triggerdelay in tens of ns
-
-            if (status < 0)
-            {
-                Console.WriteLine("Error while queuing x waveform");
-            }
-
             #endregion
 
             #region Y scan generation
 
-            // Generate and queue waveform for Y channel on waveform #1 (channel 1)
+            //Set spectial nSamplesY and prescalingY because its variation frequency is much lower.   
+            int nSamplesY;
+            int PrescalingY;
 
+            nSamplesY = (int)Math.Ceiling(1.05e8 / recording_rate * xindex.Count() / 4095);
+            nSamplesY = (nSamplesY / 5) * 5;
+            PrescalingY = (int)Math.Ceiling(1.05e8 / recording_rate * xindex.Count() / nSamplesY);
+            while (PrescalingY > 1.10e8 / (recording_rate / xindex.Count()) / nSamplesY || nSamplesY == 1 || TriggerDelay % (10 * PrescalingY) > 1)
+            {
+                nSamplesY = nSamplesY + 5;
+                PrescalingY = (int)Math.Ceiling(1.05e8 / (recording_rate / xindex.Count()) / nSamplesY);
+            }
+
+            nSamplesY = (int)Math.Ceiling((double)nSamplesY / xindex.Count()); // get back the nSamples for each position 
+            Console.WriteLine("Precaling factor for y scan" + PrescalingY + " will be used with " + nSamplesY + " for each beam position.");
+
+
+            // Generate and queue waveform for Y channel on waveform #1 (channel 1)
+            // 
             var Waveform_Y = new double[nSamples * xindex.Count() * yindex.Count()];
             Count = 0;
             for (int iy = 0; iy < yindex.Count(); iy++)
             {
                 for (int ix = 0; ix < xindex.Count(); ix++)
                 {
-                    for (int i = 0; i < nSamples; i++)
+                    for (int i = 0; i < nSamplesY; i++)
                     {
                         Waveform_Y[Count] = ypoints[yindex[yindex.Count - iy - 1]];
                         Count++;
+                        //if (Count == nSamplesY * xindex.Count() * yindex.Count())
+                        //{
+                        //   break;  // End waveform generation when the waveform is full
+                        //}
                     }
+                    //if (Count == nSamplesY * xindex.Count() * yindex.Count())
+                    //{
+                    //    break;  // Also break outer loop
+                    //}
                 }
+                //if (Count == nSamplesY * xindex.Count() * yindex.Count())
+                //{
+                //    break;  // Break outmost loop
+                //}
             }
 
             //Check the size of waveform_y array
             int length_y;
             length_y = Waveform_Y.Length;
             Console.WriteLine("Array length of Y waveform points is" + length_y);
-
-
-
-
-            var SD_Waveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_Y);
-            status = moduleAOU.waveformLoad(SD_Waveform_Y, 1, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
-
-            if (status < 0)
-            {
-                Console.WriteLine("Error while loading y waveform");
-            }
-            //Console.WriteLine("Y waveform size " + (double)moduleAOU.waveformGetMemorySize(1)/1000000 + " MB");
-
-
-            // queue waveform into channel 1 and run once
-            status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, 1, Prescaling);
-
-            if (status < 0)
-            {
-                Console.WriteLine("Error while queuing y waveform");
-            }
 
             #endregion            
 
@@ -217,31 +213,8 @@ namespace ScanControl_slave
                 Waveform_DE[ix * nSamples] = -1;
             }
 
-            // Add a line to save the array////////////////////////////////////////////////////
-            //var csvarray = new StringBuilder();
-            //int index = 0;
-            //while (index < Waveform_DE.Count())
-            //{
-            //    csvarray.AppendLine(Waveform_DE[index].ToString());
-            //}
-            //string Path = "C:/Users/End_User/Desktop/WaveformDE_x100_y100_fps1000.csv";
-            //File.WriteAllText(Path, csvarray.ToString());
-            ///////////////////////////////////////////////////////////////////////////////
-            var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
-            status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
-
-            if (status < 0)
-            {
-                Console.WriteLine("Error while loading DE waveform");
-            }
-
-            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
-            //Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(2)/1000000 + " MB");
-
-            if (status < 0)
-            {
-                Console.WriteLine("Error while queuing camera trigger, error code " + status);
-            }
+            int length_DE;
+            length_DE = Waveform_DE.Length;
 
             #endregion
 
@@ -255,6 +228,83 @@ namespace ScanControl_slave
             {
                 Waveform_DIGI[ix] = -1; // set first nSamples points to -1 to create on single trigger
             }
+            int length_DIGI;
+            length_DIGI = Waveform_DIGI.Length;
+
+            #endregion
+
+
+            #region Check wave_array sized and load all the four waveforms
+
+            double memorySizeMB = (length_x + length_y + length_DE + length_DIGI) * 8e-6;
+            if (memorySizeMB < 2000)
+            {
+                Console.WriteLine("The total memory size of the four waveform_array is" + memorySizeMB + " MB");
+            }
+            else
+            {
+                Console.WriteLine("The total memory size of the four waveform_array is" + memorySizeMB + " MB");
+                System.Windows.Forms.MessageBox.Show("Your settings exceed RAM Limitation! ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return HW_STATUS_RETURNS.HW_OTHER;
+            }
+
+            //** X scan **//
+            var SD_Waveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_X);
+
+            // load generated SD_wave to waveform #0
+            status = moduleAOU.waveformLoad(SD_Waveform_X, 0, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+            if (status < 0)
+            {
+                Console.WriteLine("Error while loading x waveform");
+            }
+            //Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
+
+            // queue waveform into channel 2 and loop for yindex.count() times
+            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count() * Nmultiframes, Prescaling); // triggerdelay in tens of ns
+
+            if (status < 0)
+            {
+                Console.WriteLine("Error while queuing x waveform");
+            }
+
+
+            //** Y scan **//
+            var SD_Waveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_Y);
+            status = moduleAOU.waveformLoad(SD_Waveform_Y, 1, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+
+            if (status < 0)
+            {
+                Console.WriteLine("Error while loading y waveform");
+            }
+            //Console.WriteLine("Y waveform size " + (double)moduleAOU.waveformGetMemorySize(1)/1000000 + " MB");
+
+
+            // queue waveform into channel 1 and run once
+            status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, Nmultiframes, Prescaling);
+
+            if (status < 0)
+            {
+                Console.WriteLine("Error while queuing y waveform");
+            }
+
+            //** DE camera scan **//
+            var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
+            status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+
+            if (status < 0)
+            {
+                Console.WriteLine("Error while loading DE waveform");
+            }
+
+            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count() * Nmultiframes, Prescaling);
+            //Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(2)/1000000 + " MB");
+
+            if (status < 0)
+            {
+                Console.WriteLine("Error while queuing camera trigger, error code " + status);
+            }
+
+            //** Digitizer camera scan **//
             var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
             status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
@@ -263,15 +313,15 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while loading x waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(4, 3, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling);
+            status = moduleAOU.AWGqueueWaveform(4, 3, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling); // No cycle cz recordsize added. 
             //Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(3)/1000000 + " MB");
 
             if (status < 0)
             {
                 Console.WriteLine("Error while queuing digitizer trigger, error code " + status);
             }
-
             #endregion
+
 
             // Configure all channels to single shot, X and trigger will automatically stop after certain amount of cycles
             moduleAOU.AWGqueueConfig(1, 0);

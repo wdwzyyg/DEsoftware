@@ -401,7 +401,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps,1);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps,1, 1);
                 //Console.WriteLine($"************PushAWGsetting thread{ Thread.CurrentThread.ManagedThreadId}");
 
             }).Start();
@@ -423,18 +423,24 @@ namespace DeExampleCSharpWPF
             double[] Yarray_vol;
             double x_step_size = 1 / (double)(x_step_num - 1);
             double y_step_size = 1 / (double)(y_step_num - 1);
+            int pixel_cycle = int.Parse(PixelCycle.Text);
 
             // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
             if (scan_scheme == 0)
             {
-                Xarray_index = new int[x_step_num];
+                Xarray_index = new int[x_step_num * pixel_cycle];
                 Yarray_index = new int[y_step_num];
                 Xarray_vol = new double[x_step_num];
                 Yarray_vol = new double[y_step_num];
 
                 for (int ix = 0; ix < x_step_num; ix++)
                 {
-                    Xarray_index[ix] = ix;
+                    Xarray_index[ix * pixel_cycle] = ix;
+                    for (int ixp = 0; ixp < pixel_cycle; ixp++)
+                    {
+                        Xarray_index[ix * pixel_cycle + ixp] = ix;
+                    }
+
                     Xarray_vol[ix] = -0.5 + x_step_size * ix;
                 }
 
@@ -446,7 +452,7 @@ namespace DeExampleCSharpWPF
 
             }
 
-            // serpentine scan scheme
+            // serpentine scan scheme pc and fc not added
             else
             {
                 Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
@@ -494,14 +500,14 @@ namespace DeExampleCSharpWPF
                 return;
             }
 
-            
+            int Nmultiframes = int.Parse(FrameCycle.Text);
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;
             int record_size;
             recording_rate = RecordingRateLookup(recording_rate);
 
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
-            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
             record_size = (int)(record_size * 1.1);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
@@ -511,10 +517,11 @@ namespace DeExampleCSharpWPF
             int fps = Int32.Parse(FrameRate.Text);
 
             nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            nSamples = (nSamples / 5) * 5;
             Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
             {
-                nSamples++;
+                nSamples = nSamples + 5;
                 Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             }
 
@@ -538,7 +545,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
 
             }).Start();
 
@@ -1042,7 +1049,7 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
-        #region Set AWG and digitizer for ROI4DSTEM
+        #region Set AWG and digitizer for ROI 4DSTEM
         // This function is currently being used to do ROI 4DSTEM acquisition
         private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
@@ -1071,6 +1078,9 @@ namespace DeExampleCSharpWPF
             double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
             double y_step_size = x_step_size;
             int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            //Get settings for multiframe-acquire
+            int Nmultiframes = int.Parse(FrameCycle.Text);
 
             if (scan_scheme == 1)
             {
@@ -1111,12 +1121,13 @@ namespace DeExampleCSharpWPF
 
 
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int pixel_cycle = int.Parse(PixelCycle.Text);
             int record_size;
             recording_rate = RecordingRateLookup(recording_rate);
 
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
-            record_size = (int)(x_step_num * y_step_num / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
             record_size = (int)(record_size * 1.1);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
@@ -1124,12 +1135,12 @@ namespace DeExampleCSharpWPF
             int nSamples;
             int Prescaling;
             int fps = Int32.Parse(FrameRate.Text);
-
             nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            nSamples = (nSamples / 5) * 5;
             Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
             {
-                nSamples++;
+                nSamples = nSamples + 5;
                 Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             }
 
@@ -1140,12 +1151,12 @@ namespace DeExampleCSharpWPF
             {
                 Thread.CurrentThread.IsBackground = true;
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-                this.Dispatcher.Invoke((Action)(() =>
-                {
-                    int sizex = x_step_num;
-                    int sizey = y_step_num;
-                    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 1, recording_rate, DE_fps);
-                }));
+                //this.Dispatcher.Invoke((Action)(() =>
+                //{
+                //    int sizex = x_step_num;
+                //    int sizey = y_step_num;
+                //    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 1, recording_rate, DE_fps);
+                //}));
 
             }).Start();
 
@@ -1155,7 +1166,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
 
             }).Start();
 
@@ -1227,14 +1238,14 @@ namespace DeExampleCSharpWPF
         // Function used to write AWG setting onto Xu's API or Chenyu's API
         // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
         // Option2D is used to mark 2D/4D acquisition, Option2D==1 then AWG will run 2D acquisition without generate DE camera trigger, only for DE in slave mode
-        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D)
+        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D, int Nmultiframes)
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             //Slave mode
             if (scan_mode == 1)
             {
                 ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
-                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D);
+                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D, Nmultiframes);
             }
             else
             {

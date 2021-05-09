@@ -170,6 +170,11 @@
 
                     </StackPanel>
                 </StackPanel>
+                <TextBlock Height="23" TextWrapping="Wrap" Text="Multiple scan setting: " Margin="20,0,371,0"/>
+                <TextBlock HorizontalAlignment="Left" Height="23" Margin="20,0,0,0" TextWrapping="Wrap" Text="Frame Cycle: " Width="88"/>
+                <TextBox x:Name="FrameCycle" HorizontalAlignment="Left" Height="25" Margin="20,0,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
+                <TextBlock HorizontalAlignment="Left" Height="23" Margin="120,-73,0,0" TextWrapping="Wrap" Text="Pixel Cycle: " Width="88"/>
+                <TextBox x:Name="PixelCycle" HorizontalAlignment="Left" Height="25" Margin="120,-25,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
 
             </StackPanel>
 
