@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
-using DeExampleCSharpWPF;
 
 // 6/8/2018: test suggesting that there might be a limit on waveforms queued into AWG, try to get around this problem
 
 // AWG test code copied from Keysight with a few modifications
-namespace ScanControl_passive
+namespace ScanControl_cz_passive
 {
     public enum HW_STATUS_RETURNS
     {
@@ -25,10 +24,9 @@ namespace ScanControl_passive
         private List<int> xindex;
         private List<int> yindex;
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate)
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay)
         {
             int status;
-            string sent;
             // Channel 1 for y scan and channel 2 for x scan
 
             //Create an instance of the AOU module
@@ -71,7 +69,7 @@ namespace ScanControl_passive
             // Set external trigger as input
             moduleAOU.triggerIOdirection(SD_TriggerDirections.AOU_TRG_IN);
             // Config trigger as external trigger and rising edge
-            //moduleAOU.AWGtriggerExternalConfig(1, SD_TriggerExternalSources.TRIGGER_PXI, SD_TriggerBehaviors.TRIGGER_RISE);
+            moduleAOU.AWGtriggerExternalConfig(1, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
             moduleAOU.AWGtriggerExternalConfig(2, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
             // flush both channels
             status = moduleAOU.AWGflush(1);
@@ -132,58 +130,29 @@ namespace ScanControl_passive
             moduleAOU.AWGqueueConfig(1, 0);
             moduleAOU.AWGqueueConfig(2, 1);
 
-            // Start both channel, x channel wait for external trigger, send software trigger to y channel
+            // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);
-            moduleAOU.AWGtrigger(1);    // trigger Y channel to protection value
-
-            // determine how long to pause after each jump based on frame rate
-            int pause_ms = 1;
-            double frametime = 1000 / (double)recording_rate;
-            if (frametime > 1)
-            {
-                pause_ms = (int)Math.Ceiling(frametime);
-            }
 
             int ncycle = 0;
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
-            while (moduleAOU.AWGnWFplaying(2)==0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
+            while (ncycle<256)
             {
-                // Empty loop wait for trigger to come
-            }
-
-            // Now cycle start
-            moduleAOU.AWGtrigger(1);    // trigger Y channel to first value
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
-            ncycle++;   // ncycle=1, currently working on cycle 1
-
-            while ((ncycle < yindex.Count - 2) && Convert.ToBoolean(moduleAOU.AWGisRunning(2)))
-            {
-                while(moduleAOU.AWGnWFplaying(2) != ypoints.Count - 2)
+                if(moduleAOU.AWGnWFplaying(1)==255)
                 {
-                   // empty loop wait for x channel to play last waveform
+                    moduleAOU.AWGjumpNextWaveform(2);
+                    ncycle++;
                 }
-                ncycle++;
-                moduleAOU.AWGtrigger(1);
-                Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
-                System.Threading.Thread.Sleep(pause_ms * 2);
-                while ( moduleAOU.AWGnWFplaying(2) != 0 )
+                if (moduleAOU.AWGnWFplaying(1)==0)
                 {
-                    // empty loop wait for x channel to play first waveform
+                    moduleAOU.AWGjumpNextWaveform(2);
+                    ncycle++;
                 }
-                ncycle++;
-                moduleAOU.AWGtrigger(1);
-                Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
-                System.Threading.Thread.Sleep(pause_ms * 2);
             }
-
 
             // after all cycles finished, sleep for 5 sec before stop AWG
-            System.Threading.Thread.Sleep(5000);
+            //Thread.Sleep(5000);
             moduleAOU.AWGstop(1);
             moduleAOU.AWGstop(2);
-
-            Console.Write("Both channel closed");
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
 

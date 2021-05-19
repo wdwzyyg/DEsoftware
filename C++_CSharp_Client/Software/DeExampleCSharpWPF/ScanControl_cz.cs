@@ -22,7 +22,7 @@ namespace ScanControl_cz
         private List<int> xindex;
         private List<int> yindex;
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate, int Option2D, int Nmultiframes)
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay)
         {
             int status;
             // Channel 1 for y scan and channel 2 for x scan

@@ -4,43 +4,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows;
 using Ivi.Driver.Interop;
 using Keysight.KtM9217.Interop;
+using System.Windows.Input;
 #endregion 
 
 // this cannot run at the same time as soft front panel of digitizer
 // This will only work on DE compute with Keysight libraries installed
 namespace Digitizer
 {
+
     class Program
     {
-        [STAThread]
+        
 
-        public static void CancelAcquisition()
-        {
-            KtM9217 driver = null;
-            driver = new KtM9217();
-
-            // Edit resource and options as needed. Resource is ignored if option Simulate=true
-            string resourceDesc = "PXI0::8-0.0::INSTR";
-
-            string initOptions = "QueryInstrStatus=true, Simulate=false, DriverSetup= Model=, Trace=false";
-
-            bool idquery = true;
-            bool reset = true;
-
-            // Initialize the driver. See driver help topic "Initializing the IVI-COM Driver" for additional information
-            driver.Initialize(resourceDesc, idquery, reset, initOptions);
-            if (driver != null && driver.Initialized)
-            {
-                #region Close Driver Instances
-                driver.Close();
-                Console.WriteLine("Driver Closed");
-                #endregion
-            }
-        }
-
+        [STAThread] 
         public static void FetchData( int record_size, int recording_rate, ref double[] WaveformArray_Ch1)
         {
             Console.WriteLine(" PrintProperties");
@@ -53,7 +32,7 @@ namespace Digitizer
                 driver = new KtM9217();
 
                 // Edit resource and options as needed. Resource is ignored if option Simulate=true
-                string resourceDesc = "PXI0::8-0.0::INSTR";
+                string resourceDesc = "PXI0::31-0.0::INSTR";
 
                 string initOptions = "QueryInstrStatus=true, Simulate=false, DriverSetup= Model=, Trace=false";
 
@@ -64,7 +43,7 @@ namespace Digitizer
                 driver.Initialize(resourceDesc, idquery, reset, initOptions);
                 Console.WriteLine("Driver Initialized\n");
                 #endregion
-/*
+
                 #region Print Driver Properties
                 Console.WriteLine("Identifier: {0}", driver.Identity.Identifier);
                 Console.WriteLine("Revision: {0}", driver.Identity.Revision);
@@ -75,7 +54,7 @@ namespace Digitizer
                 Console.WriteLine("Serial #: {0}", driver.System.SerialNumber);
                 Console.WriteLine("\nSimulate: {0}\n", driver.DriverOperation.Simulate);
                 #endregion
-*/
+
                 #region ActiveSource Settings
                 Console.WriteLine("Configuring ActiveSource source to External\n");
                 driver.Trigger.ActiveSource = ("External");
@@ -132,11 +111,32 @@ namespace Digitizer
                 driver.Channels.get_Item("Channel1").Measurement.FetchWaveformReal64(ref WaveformArray_Ch1, ref ActualPoints_Ch1, ref FirstValidPoint_Ch1, ref InitialXOffset_Ch1, ref InitialXTimeSeconds_Ch1, ref InitialXTimeFraction_Ch1, ref XIncrement_Ch1);
                 #endregion
 
+                ////Abort acquisition when type esc
+                //try
+                //{
+                //    if (Console.KeyAvailable)
+                //    {
+                //        ConsoleKeyInfo ckid = Console.ReadKey(false);
+                //        if (ckid.Key == ConsoleKey.Escape)
+                //        {
+                //                driver.Acquisition.Abort();
+                //                Console.WriteLine("Digitizer acquisition aborted.");                      
+                //        }
+                //    }
+
+                //}
+                //catch (Exception ex)
+                //{
+                //    Console.WriteLine(ex.Message);
+                //}
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+
+
             finally
             {
                 if (driver != null && driver.Initialized)

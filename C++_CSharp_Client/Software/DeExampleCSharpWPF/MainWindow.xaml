@@ -132,30 +132,20 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
 
-                    <StackPanel Orientation="Vertical" Margin="20,40,0,0" Height="234" RenderTransformOrigin="0.489,0.778">
+                    <StackPanel Orientation="Vertical" Margin="20,40,0,0">
                         <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="130"/>
                         <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start"/><Run Text=" X:"/></TextBlock>
                         <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
                         <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
-                        <Button x:Name="CancelAcquisition" Content="Cancel Acquisition" Height="34" Width="137" Margin="0,50,0,0" Click="CancelAcq" FontSize="14" RenderTransformOrigin="0.508,1.576">
-                            <Button.RenderTransform>
-                                <TransformGroup>
-                                    <ScaleTransform/>
-                                    <SkewTransform/>
-                                    <RotateTransform Angle="-0.147"/>
-                                    <TranslateTransform/>
-                                </TransformGroup>
-                            </Button.RenderTransform>
-                        </Button>
 
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="0,40,0,0">
-                        <TextBlock x:Name="textBlock1_Copy2" HorizontalAlignment="Left" Height="20" Margin="0,20,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="StartY" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="100" Width="90"/>
-                        <TextBlock x:Name="textBlock1_Copy3" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="EndY" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" Width="90"/>
+                        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,20,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="StartY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="100" Width="90"/>
+                        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="EndY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="412" Width="90"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="10,0,0,0">
@@ -166,10 +156,6 @@
                         <TextBox x:Name="PosY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
                         <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
                         <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Bottom" Width="90"/>
-                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="130"><Run Text="Frame "/><Run Text="C"/><Run Text="ycle"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="FrameCycle" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Bottom" Width="90"/>
-                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="130"><Run Text="Pixel"/><Run Text=" "/><Run Text="C"/><Run Text="ycle"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="PixelCycle" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="1" VerticalAlignment="Bottom" Width="90"/>
 
                     </StackPanel>
 
@@ -184,6 +170,11 @@
 
                     </StackPanel>
                 </StackPanel>
+                <TextBlock Height="23" TextWrapping="Wrap" Text="Multiple scan setting: " Margin="20,0,371,0"/>
+                <TextBlock HorizontalAlignment="Left" Height="23" Margin="20,0,0,0" TextWrapping="Wrap" Text="Frame Cycle: " Width="88"/>
+                <TextBox x:Name="FrameCycle" HorizontalAlignment="Left" Height="25" Margin="20,0,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
+                <TextBlock HorizontalAlignment="Left" Height="23" Margin="120,-73,0,0" TextWrapping="Wrap" Text="Pixel Cycle: " Width="88"/>
+                <TextBox x:Name="PixelCycle" HorizontalAlignment="Left" Height="25" Margin="120,-25,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
 
             </StackPanel>
 
@@ -214,7 +205,7 @@
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <Button Click="HAADFFilePath_Click" Content="Select HAADF file saving path" Margin="0,0,0,0" x:Name="HAADFFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
-                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/Archive/ScanSystem/HAADFpreview/" VerticalAlignment="Top"/>
+                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/HAADFpreview/" VerticalAlignment="Top"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
@@ -225,7 +216,7 @@
 
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
-                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="142" Width="500" VerticalAlignment="Top"/>
+                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>
                 </StackPanel>
 
             </StackPanel>
