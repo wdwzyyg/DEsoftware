@@ -1948,9 +1948,9 @@ namespace DeExampleCSharpWPF
             }
 
             nSamplesY = (int)Math.Ceiling((double)nSamplesY / xpos);
-            int maxpc = (int)Math.Floor(1.6e10 / 16 / (nSamples * xpos * 3 + nSamples * xpos + nSamplesY * xpos * ypos));
+            int maxpc = (int)Math.Floor(1.6e10 / 16 / (double)(nSamples * xpos * 3 + nSamples * xpos + nSamplesY * xpos * ypos));
 
-            double fc_storage = (double)storageTB * 1024 * 1024 * 1024 * 1024 / (xpos * ypos * readoutsize * 16 / 2);
+            double fc_storage = (double)storageTB * 1024 * 1024 * 1024 * 1024 / xpos / ypos / readoutsize / 8;
             double fc_digi = (double)3.2e7 / (xpos * ypos * 10 * 1.1);
             int maxfc = (int)Math.Floor(Math.Min(fc_storage, fc_digi));
             string sent = "The max pixel cycle # is " + maxpc + " and max frame cycle # is " + maxfc + " / your selected Pixel Cycle.\n";
