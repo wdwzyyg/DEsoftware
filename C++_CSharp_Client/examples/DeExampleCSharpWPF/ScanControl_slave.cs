@@ -72,21 +72,24 @@ namespace ScanControl_slave
                 TriggerDelay = TriggerDelay / 10;
 
             // For global shutter mode, set trigger signal delay to 10000, move beam when reading data
+
             // 4/28/2021 check with chenyu about trigger delay time Benjamin suggested: 203.8us so  the value here should be 20380
             // from timing for DE-16 global shutter modes with high gain, no CDS
-            TriggerDelay = 0;  
+
+            // 6/1/2021 the delay time of global offchip CDS mode 123 is 526.2, 144.6, 45.3 us 
+            TriggerDelay = 0;  // Maximum is 65535 according to Keysight
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
             Console.WriteLine("Trigger delay by " + TriggerDelay*10 + " ns from beam position movement.");
 
-            // Config amplitude and setup AWG in channels 1 and 2,
-            moduleAOU.channelAmplitude(1, y_amp);
+            // Config amplitude and setup AWG in channels 1 and 2, 3, 4
+            moduleAOU.channelAmplitude(1, x_amp);
             moduleAOU.channelWaveShape(1, SD_Waveshapes.AOU_AWG);
-            moduleAOU.channelAmplitude(2, x_amp);
+            moduleAOU.channelAmplitude(2, y_amp);
             moduleAOU.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
             moduleAOU.channelAmplitude(3, 0.5);
             moduleAOU.channelWaveShape(3, SD_Waveshapes.AOU_AWG);
-            moduleAOU.channelAmplitude(4, 0.5);
+            moduleAOU.channelAmplitude(4, 0.25); // 0.5 get to ~8-9v edge, 
             moduleAOU.channelWaveShape(4, SD_Waveshapes.AOU_AWG);
             moduleAOU.waveformFlush();
 
@@ -176,7 +179,7 @@ namespace ScanControl_slave
             {
                 for (int ix = 0; ix < xindex.Count(); ix++)
                 {
-                    for (int i = 0; i < nSamplesY; i++)
+                    for (int i = 0; i < nSamples; i++)
                     {
                         Waveform_Y[Count] = ypoints[yindex[yindex.Count - iy - 1]];
                         Count++;
@@ -226,7 +229,7 @@ namespace ScanControl_slave
             var Waveform_DIGI = new double[nSamples * xindex.Count()];
             for (int ix = 0; ix < nSamples; ix++)
             {
-                Waveform_DIGI[ix] = -1; // set first nSamples points to -1 to create on single trigger
+                Waveform_DIGI[ix] = -1; // set first nSamples points to -1 to create an single trigger
             }
             int length_DIGI;
             length_DIGI = Waveform_DIGI.Length;
@@ -259,7 +262,7 @@ namespace ScanControl_slave
             }
             //Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
 
-            // queue waveform into channel 2 and loop for yindex.count() times
+            // queue waveform into channel 1 and loop for yindex.count() times
             status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count() * Nmultiframes, Prescaling); // triggerdelay in tens of ns
 
             if (status < 0)
@@ -274,12 +277,12 @@ namespace ScanControl_slave
 
             if (status < 0)
             {
-                Console.WriteLine("Error while loading y waveform");
+                Console.WriteLine("Error while loading x waveform");
             }
             //Console.WriteLine("Y waveform size " + (double)moduleAOU.waveformGetMemorySize(1)/1000000 + " MB");
 
 
-            // queue waveform into channel 1 and run once
+            // queue waveform into channel 2 and run once
             status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, Nmultiframes, Prescaling);
 
             if (status < 0)
@@ -288,6 +291,7 @@ namespace ScanControl_slave
             }
 
             //** DE camera scan **//
+            int Delay_DE= 65535;
             var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
             status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
@@ -296,7 +300,7 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while loading DE waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count() * Nmultiframes, Prescaling);
+            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, Delay_DE, yindex.Count() * Nmultiframes, Prescaling);
             //Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(2)/1000000 + " MB");
 
             if (status < 0)
@@ -305,15 +309,16 @@ namespace ScanControl_slave
             }
 
             //** Digitizer camera scan **//
+            int Delay_DIGI = 65535;
             var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
             status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
             if (status < 0)
             {
-                Console.WriteLine("Error while loading x waveform");
+                Console.WriteLine("Error while loading DIGI waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(4, 3, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling); // No cycle cz recordsize added. 
+            status = moduleAOU.AWGqueueWaveform(4, 3, SD_TriggerModes.AUTOTRIG, Delay_DIGI, 1, Prescaling); // No cycle cz recordsize added. 
             //Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(3)/1000000 + " MB");
 
             if (status < 0)

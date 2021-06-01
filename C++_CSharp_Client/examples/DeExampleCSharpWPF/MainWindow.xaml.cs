@@ -528,16 +528,16 @@ namespace DeExampleCSharpWPF
             double DE_fps;
             DE_fps = 1e-8 * Prescaling * nSamples;
 
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-               //this.Dispatcher.Invoke((Action)(() =>
-               // {
-               //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
-               // }));
+            //new Thread(() =>
+            //{
+            //    Thread.CurrentThread.IsBackground = true;
+            //    Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+            //    //this.Dispatcher.Invoke((Action)(() =>
+            //    // {
+            //    //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
+            //    // }));
 
-            }).Start();
+            //}).Start();
 
             // set new thread for AWG
 
