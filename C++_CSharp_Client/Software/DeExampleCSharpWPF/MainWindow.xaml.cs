@@ -528,16 +528,16 @@ namespace DeExampleCSharpWPF
             double DE_fps;
             DE_fps = 1e-8 * Prescaling * nSamples;
 
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-               //this.Dispatcher.Invoke((Action)(() =>
-               // {
-               //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
-               // }));
+            //new Thread(() =>
+            //{
+            //    Thread.CurrentThread.IsBackground = true;
+            //    Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+            //    //this.Dispatcher.Invoke((Action)(() =>
+            //    // {
+            //    //    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
+            //    // }));
 
-            }).Start();
+            //}).Start();
 
             // set new thread for AWG
 
@@ -1915,6 +1915,48 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
+        private void CalLimit(object sender, RoutedEventArgs e)
+        {
+            int storageTB = 11;
+            int xpos = Int32.Parse(PosX.Text);
+            int ypos = Int32.Parse(PosY.Text);
+            int readoutsize = (Int32.Parse(pxx.Text)) * (Int32.Parse(pxy.Text));
+            int fps = Int32.Parse(FrameRate.Text);
+
+            int nSamples;
+            int Prescaling;
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            nSamples = (nSamples / 5) * 5;
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples = nSamples + 5;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            };
+
+            int nSamplesY;
+            int PrescalingY;
+
+            nSamplesY = (int)Math.Ceiling(1.05e8 / fps * xpos / 4095);
+            nSamplesY = (nSamplesY / 5) * 5;
+            PrescalingY = (int)Math.Ceiling(1.05e8 / fps * xpos / nSamplesY);
+            while (PrescalingY > 1.10e8 / (fps / xpos) / nSamplesY || nSamplesY == 1)
+            {
+                nSamplesY = nSamplesY + 5;
+                PrescalingY = (int)Math.Ceiling(1.05e8 / (fps / xpos) / nSamplesY);
+            }
+
+            nSamplesY = (int)Math.Ceiling((double)nSamplesY / xpos);
+            int maxpc = (int)Math.Floor(1.6e10 / 16 / (double)(nSamples * xpos * 3 + nSamples * xpos + nSamplesY * xpos * ypos));
+
+            double fc_storage = (double)storageTB * 1024 * 1024 * 1024 * 1024 / xpos / ypos / readoutsize / 8;
+            double fc_digi = (double)3.2e7 / (xpos * ypos * 10 * 1.1);
+            int maxfc = (int)Math.Floor(Math.Min(fc_storage, fc_digi));
+            string sent = "The max pixel cycle # is " + maxpc + " and max frame cycle # is " + maxfc + " / your selected Pixel Cycle.\n";
+            MessageBox.Text += sent;
+
+        }
     }
 
 

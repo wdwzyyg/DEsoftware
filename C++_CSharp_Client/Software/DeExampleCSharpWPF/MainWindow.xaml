@@ -175,6 +175,12 @@
                 <TextBox x:Name="FrameCycle" HorizontalAlignment="Left" Height="25" Margin="20,0,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
                 <TextBlock HorizontalAlignment="Left" Height="23" Margin="120,-73,0,0" TextWrapping="Wrap" Text="Pixel Cycle: " Width="88"/>
                 <TextBox x:Name="PixelCycle" HorizontalAlignment="Left" Height="25" Margin="120,-25,0,0" TextWrapping="Wrap" Text="1" Width="67"/>
+                <Button Content="Calculate Limit" HorizontalAlignment="Left" Height="28" Margin="21,10,0,0" Width="87" RenderTransformOrigin="0.47,0.893" Click="CalLimit"/>
+                <TextBlock HorizontalAlignment="Left" Height="27" Margin="120,-22,0,0" TextWrapping="Wrap" Text="ReadOutArea: " Width="79"/>
+                <TextBlock HorizontalAlignment="Left" Height="27" Margin="250,-26,0,0" TextWrapping="Wrap" Text="X" Width="11"/>
+                <TextBox Name="pxx" HorizontalAlignment="Left" Height="26" Margin="199,-30,0,0" TextWrapping="Wrap" Text="" Width="45"/>
+                <TextBox Name="pxy" HorizontalAlignment="Left" Height="26" Margin="265,-30,0,0" TextWrapping="Wrap" Text="" Width="45"/>
+
 
             </StackPanel>
 
