@@ -55,13 +55,13 @@ namespace ScanControl_slave
             int nSamples;
             int Prescaling;
 
-            nSamples = (int) Math.Ceiling(1.05e8 / recording_rate / 4095);
+            nSamples = (int) Math.Ceiling(1e8 / recording_rate / 4095);
             nSamples = (nSamples / 5) * 5;
-            Prescaling = (int) Math.Ceiling(1.05e8 / recording_rate / nSamples);
-            while (Prescaling > 1.10e8/recording_rate/nSamples || nSamples == 0 || Prescaling  > 4095)
+            Prescaling = (int) Math.Ceiling(1e8 / recording_rate / nSamples);
+            while (Prescaling > 1.02e8/recording_rate/nSamples || nSamples == 0 || Prescaling  > 4095)
             {
                 nSamples = nSamples+5;
-                Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
+                Prescaling = (int)Math.Ceiling(1e8 / recording_rate / nSamples);
             }
 
             int TriggerDelay;
@@ -124,7 +124,6 @@ namespace ScanControl_slave
             #region X scan generation
 
             // Generate and queue waveform for X channel on waveform #0 (channel 2) 
-
             var Waveform_X = new double[nSamples * xindex.Count()];
             int Count = 0;
             // create double array for each x cycle
@@ -209,7 +208,6 @@ namespace ScanControl_slave
             #region generate DE trigger
 
             // Generate and queue waveform for DE trigger on wavefrom #2 (channel 3), same size and reps as x array
-
             var Waveform_DE = new double[nSamples * xindex.Count()];
             for (int ix = 0; ix < xindex.Count; ix++)
             {
@@ -291,7 +289,7 @@ namespace ScanControl_slave
             }
 
             //** DE camera scan **//
-            int Delay_DE= 65535;
+            int Delay_DE= 0;
             var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
             status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
@@ -309,7 +307,7 @@ namespace ScanControl_slave
             }
 
             //** Digitizer camera scan **//
-            int Delay_DIGI = 65535;
+            int Delay_DIGI = 0;
             var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
             status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
